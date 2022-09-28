@@ -17,3 +17,5 @@ Some other notes:
 - On Windows you might need to install "Msys2"
 - On Linux you might need to install "libtinfo-dev" and "zlib1g-dev"
 - On Linux you might need to use `stack` with version suffix, e.g. `stack-2.7.5`. 
+
+- 4c182baf-e244-431f-9582-5eed5345d89f
