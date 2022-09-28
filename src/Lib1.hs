@@ -5,6 +5,7 @@ module Lib1(
 
 import Types
 
+
 -- This is a stateS of your game.
 -- It must contain all values you might need during a game:
 -- number of occupied rows/cols, hints, occupied cells,..
@@ -22,7 +23,7 @@ emptyState = State [("Initial state", DNull)]
 -- IMPLEMENT
 -- This adds game data to initial state 
 gameStart :: State -> Document -> State
-gameStart (State l) d = State $ ("Game", DList [DMap [("toggle", DList []), ("hint", DList [])], d ]) : l
+gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList []), ("hints", DList [])], d ]) : l
 
 
 -- IMPLEMENT
@@ -40,10 +41,21 @@ mkCheck _ = Check []
 -- Toggle state's value
 -- Receive raw user input tokens
 toggle :: State -> [String] -> State
-toggle (State l) t = State $ ("Toggle " ++ show t, DNull) : l
---toggle (State l) t =
+--toggle (State l) t = State $ ("Toggle " ++ show t, DNull) : l
+toggle (State (l1,[[(l2,ls)]])) (x:y:[]) = 
+    --if(l == "occupied_cells")
+        --thenW
+            --DMap ([("col", DInteger (read x)), ("row",DInteger (read y))]) : ls
+        --else
+            --toggle ("test":ls) (x:y:[]) 
+
+--gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList []), ("hints", DList [])], d ]) : l
+
+
+    --State $ ("Toggle", DList [DMap ([("col", DInteger (read x)), ("row",DInteger (read y))])]) : l
     --1 dmap (toggle, dlist[dint, dint])
     --2 (x:xs) s=="toggle", dlist : naujas 
+    --3
 
 
 -- IMPLEMENT
