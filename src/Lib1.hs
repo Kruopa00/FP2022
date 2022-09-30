@@ -88,4 +88,37 @@ func6 l (x:y:[]) = DMap ([("col", DInteger (read x)), ("row",DInteger (read y))]
 -- IMPLEMENT
 -- Adds hint data to the game state
 hint :: State -> Document -> State
-hint (State l) h = State $ ("Hint " ++ show h, DNull) : l
+hint (State (l:ls)) t = State ((hintFunc1 l t) : ls)
+
+hintFunc1 :: (String, Document) -> Document -> (String, Document)
+hintFunc1 (l,ls) t = (l, hintFunc2 ls t)
+
+hintFunc2 :: Document -> Document -> Document
+hintFunc2 (DList (l:ls)) t = DList ((hintFunc3 l t):ls)
+
+hintFunc3 :: Document -> Document -> Document
+hintFunc3 (DMap (l:ls)) t = DMap (hintFunc4 l t :ls)
+
+hintFunc4 :: (String, Document) -> Document -> (String, Document)
+hintFunc4 (l, ls) t = (l, hintFunc5 ls t)
+
+hintFunc5 :: Document -> Document -> Document
+hintFunc5 (DList l) t = (DList (hintFunc6 l t))
+
+hintFunc6 :: [Document] -> Document -> [Document]
+hintFunc6 l t = (hintFunc7 t):l
+
+hintFunc7 :: Document -> Document
+hintFunc7 (DMap [l]) = hintFunc8 l
+
+hintFunc8 :: (String, Document) -> Document
+hintFunc8 (l,ls) =  hintFunc9 ls
+
+hintFunc9 :: Document -> Document
+hintFunc9 (DMap [l,(ls,DNull)]) = hintFunc10 l
+hintFunc9 (DMap [l,(ls,lss)]) = hintFunc8 (ls,lss)
+
+hintFunc10 :: (String, Document) -> Document
+hintFunc10 (l,ls) = ls
+
+
