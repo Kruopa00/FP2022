@@ -4,7 +4,6 @@ module Lib1(
 ) where
 
 import Types
-import Data.Char
 
 
 -- This is a stateS of your game.
@@ -28,7 +27,6 @@ gameStart :: State -> Document -> State
 gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList []), ("hints", DList [])], d ]) : l
 
 
-
 mapas :: [((Int, Int),Int)]
 mapas = [( (1,1),0),((1,2),0),((1,3),0),((1,4),0),((1,5),0),((1,6),0),((1,7),0),((1,8),0),((1,9),0),((1,10),0),
          ((2,1),0),((2,2),0),((2,3),0),((2,4),0),((2,5),0),((2,6),0),((2,7),0),((2,8),0),((2,9),0),((2,10),0),
@@ -45,17 +43,18 @@ array :: [a]
 array = []
 
 map1 :: [((Int, Int), Int)] -> [Int] -> [Int]
-map1 (((_,y), z) : xs) array 
+map1 (((_,y), z) : xs) array
         | y == 10 = ( z : array) ++ [10] ++ map1 xs array
         | otherwise = ( z : array) ++ map1 xs array
 map1 _ _= []
-    
+
 -- | x == 10 && y == 10 = ( z : array) ++ map1 xs array
 
 -- IMPLEMENT
 -- renders your game board
 render :: State -> String
-render a = foo (map1 mapas array) newArray
+--render a = foo (map1 mapas array) newArray
+--render a = show $ deeper a resultArray
 --render a = foo $ map1 mapas array
 --maps[((x,y),DInt)] -- 100 tuplu -> 100 reiksmiu
 
@@ -65,7 +64,7 @@ newArray = ""
 foo :: [Int] -> String -> String
 foo (x:xs) newArray
     | x /= 10 = newArray ++ show x ++ foo xs newArray
-    | otherwise = newArray ++ "\n" ++ foo xs newArray   
+    | otherwise = newArray ++ "\n" ++ foo xs newArray
 foo _ _ = ""
 
 convert :: Document -> Int
@@ -103,6 +102,38 @@ func6 :: [Document] -> [String] -> [Document]
 func6 l (x:y:[]) = DMap ([("col", DInteger (read x)), ("row",DInteger (read y))]):l
 
 
+
+resultArray :: [Int]
+resultArray = []
+
+deeper :: State -> [Int] -> [Int]
+deeper (State (l:ls)) resultArray = deeper1 l resultArray
+
+deeper1 :: (String, Document) -> [Int] -> [Int]
+deeper1 (l, ls) resultArray = deeper2 ls resultArray
+
+deeper2 :: Document -> [Int] -> [Int]
+deeper2 (DList [l,ls]) resultArray = deeper3 ls resultArray
+
+deeper3 :: Document -> [Int] -> [Int]
+deeper3 (DMap (l:ls)) resultArray = deeper4 ls resultArray
+
+deeper4 :: [(String, Document)] -> [Int] -> [Int]
+deeper4 (l:ls) resultArray = cols l resultArray ++ deeper5 ls resultArray
+
+deeper5 :: [(String, Document)] -> [Int] -> [Int]
+deeper5 (l:ls) resultArray = cols l resultArray
+
+cols :: (String, Document) -> [Int] -> [Int]
+cols (l,ls) resultArray = cols1 ls resultArray
+
+cols1 :: Document -> [Int] -> [Int]
+cols1 (DList (DInteger x : ls)) resultArray = cols1 (DList ls) $ x : resultArray
+cols1 _ resultArray = reverse resultArray
+
+{-cols2 :: Document -> Int
+cols2 (DInteger x) = x
+cols2 _ = -1-}
 -- IMPLEMENT
 -- Adds hint data to the game state
 hint :: State -> Document -> State
