@@ -4,6 +4,7 @@ module Lib1(
 ) where
 
 import Types
+import Data.Char
 
 
 -- This is a stateS of your game.
@@ -29,7 +30,7 @@ gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList [
 
 
 mapas :: [((Int, Int),Int)]
-mapas = [((1,1),0),((1,2),0),((1,3),0),((1,4),0),((1,5),0),((1,6),0),((1,7),0),((1,8),0),((1,9),0),((1,10),0),
+mapas = [( (1,1),0),((1,2),0),((1,3),0),((1,4),0),((1,5),0),((1,6),0),((1,7),0),((1,8),0),((1,9),0),((1,10),0),
          ((2,1),0),((2,2),0),((2,3),0),((2,4),0),((2,5),0),((2,6),0),((2,7),0),((2,8),0),((2,9),0),((2,10),0),
          ((3,1),0),((3,2),0),((3,3),0),((3,4),0),((3,5),0),((3,6),0),((3,7),0),((3,8),0),((3,9),0),((3,10),0),
          ((4,1),0),((4,2),0),((4,3),0),((4,4),0),((4,5),0),((4,6),0),((4,7),0),((4,8),0),((4,9),0),((4,10),0),
@@ -40,16 +41,35 @@ mapas = [((1,1),0),((1,2),0),((1,3),0),((1,4),0),((1,5),0),((1,6),0),((1,7),0),(
          ((9,1),0),((9,2),0),((9,3),0),((9,4),0),((9,5),0),((9,6),0),((9,7),0),((9,8),0),((9,9),0),((9,10),0),
          ((10,1),0),((10,2),0),((10,3),0),((10,4),0),((10,5),0),((10,6),0),((10,7),0),((10,8),0),((10,9),0),((10,10),0)]
 
+array :: [a]
+array = []
+
+map1 :: [((Int, Int), Int)] -> [Int] -> [Int]
+map1 (((_,y), z) : xs) array 
+        | y == 10 = ( z : array) ++ [10] ++ map1 xs array
+        | otherwise = ( z : array) ++ map1 xs array
+map1 _ _= []
+    
+-- | x == 10 && y == 10 = ( z : array) ++ map1 xs array
 
 -- IMPLEMENT
 -- renders your game board
 render :: State -> String
-render a = show a
-
+render a = foo (map1 mapas array) newArray
+--render a = foo $ map1 mapas array
 --maps[((x,y),DInt)] -- 100 tuplu -> 100 reiksmiu
 
+newArray :: String
+newArray = ""
+
+foo :: [Int] -> String -> String
+foo (x:xs) newArray
+    | x /= 10 = newArray ++ show x ++ foo xs newArray
+    | otherwise = newArray ++ "\n" ++ foo xs newArray   
+foo _ _ = ""
+
 convert :: Document -> Int
-convert (DInteger x) = x  
+convert (DInteger x) = x
 
 
 -- IMPLEMENT
@@ -81,26 +101,6 @@ func5 (DList l) t = (DList (func6 l t))
 
 func6 :: [Document] -> [String] -> [Document]
 func6 l (x:y:[]) = DMap ([("col", DInteger (read x)), ("row",DInteger (read y))]):l
-
-
-
-
-
-
-
-    --if(l == "occupied_cells")
-        --thenW
-            --DMap ([("col", DInteger (read x)), ("row",DInteger (read y))]) : ls
-        --else
-            --toggle ("test":ls) (x:y:[]) 
-
---gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList []), ("hints", DList [])], d ]) : l
-
-
-    --State $ ("Toggle", DList [DMap ([("col", DInteger (read x)), ("row",DInteger (read y))])]) : l
-    --1 dmap (toggle, dlist[dint, dint])
-    --2 (x:xs) s=="toggle", dlist : naujas 
-    --3
 
 
 -- IMPLEMENT
