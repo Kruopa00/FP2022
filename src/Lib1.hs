@@ -53,7 +53,7 @@ map1 _ _= []
 -- IMPLEMENT
 -- renders your game board
 render :: State -> String
---render a = foo (map1 mapas array) newArray
+render a = puttingCol (take 11 (deeper a resultArray)) ++ foo (map1 mapas array) newArray (drop 9 (deeper a resultArray))
 --render a = show $ deeper a resultArray
 --render a = foo $ map1 mapas array
 --maps[((x,y),DInt)] -- 100 tuplu -> 100 reiksmiu
@@ -61,11 +61,19 @@ render :: State -> String
 newArray :: String
 newArray = ""
 
-foo :: [Int] -> String -> String
-foo (x:xs) newArray
-    | x /= 10 = newArray ++ show x ++ foo xs newArray
-    | otherwise = newArray ++ "\n" ++ foo xs newArray
-foo _ _ = ""
+puttingCol :: [Int] -> String
+puttingCol (x:xs) = (show x ++ " ") ++ puttingCol xs
+puttingCol (x:_) = "\n" ++ show x ++ " - "
+puttingCol _ = "\n"
+
+
+
+foo :: [Int] -> String -> [Int] -> String
+foo (x:xs) newArray (y:ys)
+    | x /= 10 = newArray ++ show x ++ " " ++ foo xs newArray (y:ys)
+    | otherwise = newArray ++ "\n" ++ show y ++ " - " ++ foo xs newArray ys
+foo _ _ _ = ""
+
 
 convert :: Document -> Int
 convert (DInteger x) = x
