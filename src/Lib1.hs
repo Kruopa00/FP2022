@@ -4,6 +4,29 @@ module Lib1(
 ) where
 
 import Types
+import Data.Vector.Internal.Check (check)
+
+
+--GAME INFO
+--
+--Coordinates are from 1 to 10 and start from top left corner
+--
+--toggle 
+--Function takes two Int arguments with values from 1 to 10 (If not - game crashes). It toggles the coordinates value in the map (Value cannot be untoggled...)
+--
+--hint
+--Function takes one Int argument (If not - game crashes). It automatically toggles the coordinates. 
+--The number indicates which hint you will get. Ex. hint 1 - will give you first hint, hint 7 - will give you 7th hint, but not 7 hints.
+--
+--show 
+--Function doesnt take arguments, it simply renders the map to the screen.
+--
+--check
+--Function returns if you solved the puzzle. There are two ways to solve it, but check only recognizes one of the ways to solve it. 
+--Also if you toggle the same coordinate twice, or you toggle the coordinate which is already a hint, it will not recognize it as the solution.
+--
+--Made by Rokas Čebatorius, Arnas Klimašauskas, Vytautas Krupavičius, Ugnius Motiejunas
+
 
 
 -- This is a stateS of your game.
@@ -14,9 +37,11 @@ import Types
 data State = State [(String, Document)]
     deriving Show
 
--- GAME MAP
-mapas :: [((Int, Int),Int)]
-mapas = [((0,0),0),((0,1),0),((0,2),0),((0,3),0),((0,4),0),((0,5),0),((0,6),0),((0,7),0),((0,8),0),((0,9),0),
+-- Game map
+-- Format: ((col, row), value)
+-- Values: 1 - occupied, 0 - free
+gameMap :: [((Int, Int),Int)]
+gameMap = [((0,0),0),((0,1),0),((0,2),0),((0,3),0),((0,4),0),((0,5),0),((0,6),0),((0,7),0),((0,8),0),((0,9),0),
          ((1,0),0),((1,1),0),((1,2),0),((1,3),0),((1,4),0),((1,5),0),((1,6),0),((1,7),0),((1,8),0),((1,9),0),
          ((2,0),0),((2,1),0),((2,2),0),((2,3),0),((2,4),0),((2,5),0),((2,6),0),((2,7),0),((2,8),0),((2,9),0),
          ((3,0),0),((3,1),0),((3,2),0),((3,3),0),((3,4),0),((3,5),0),((3,6),0),((3,7),0),((3,8),0),((3,9),0),
@@ -37,14 +62,37 @@ emptyState = State [("Initial state", DNull)]
 -- IMPLEMENT
 -- This adds game data to initial state 
 gameStart :: State -> Document -> State
-gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList []), ("hints", DList [])], d ]) : l
+gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList [])], d ]) : l
+
+
+-- IMPLEMENT
+-- renders your game board
+render :: State -> String
+render a = puttingCol (take 10 (deeper a []))  ++ puttingValues (map1 (updateMap gameMap [] (getToggles a [])) []) "" (drop 10 (deeper a []))
+
+
+-- IMPLEMENT
+-- Toggle state's value
+-- Receive raw user input tokens
+toggle :: State -> [String] -> State
+toggle (State (l:ls)) t = State ((toggleFunc1 l t) : ls)
+
+
+-- IMPLEMENT
+-- Adds hint data to the game state
+hint :: State -> Document -> State
+hint (State (l:ls)) t = State ((hintFunc1 l t) : ls)
+
+
+-- IMPLEMENT
+-- Make check from current state
+-- Only works with one answer 
+mkCheck :: State -> Check
+mkCheck a = (getCheck a (Check []))
 
 
 
---TAKES MAP VALUES
-array :: [a]
-array = []
-
+--Takes map values and puts into list
 map1 :: [((Int, Int), Int)] -> [Int] -> [Int]
 map1 (((_,y), z) : xs) array
         | y == 9 = ( z : array) ++ [10] ++ map1 xs array
@@ -52,174 +100,117 @@ map1 (((_,y), z) : xs) array
 map1 _ _= []
 
 
-
-n :: [((Int, Int),Int)]
-n=[]
-
-
-render :: State -> String
-render a = puttingCol (take 10 (deeper a resultArray))  ++ foo (map1 (renderF1 mapas n (getToggles a toggledCords)) array) newArray (drop 10 (deeper a resultArray))
--- -- IMPLEMENT
--- -- renders your game board
--- render :: State -> String
--- --render a = show (renderF1 a mapas n)
--- render a = show (renderF1 mapas n (getToggles a toggledCords))
-
--- renderF1 :: State -> [((Int, Int),Int)] -> [((Int, Int),Int)] -> [((Int, Int),Int)]
--- renderF1 l (x:xs) n
---     |xs /= [] = do
---         (renderF1 l xs (((f2 x l)):n)) -- likusi mapa siuncia i pradzia kartu su nauju mapu
---     |xs == [] = reverse ((f2 x l):n)
-
-
--- --renderF1 (State l) (x:[]) = ((f2 x))
-
-
--- f2 :: ((Int,Int), Int) -> State -> ((Int,Int), Int)
--- f2 ((x,y),s) l =
---     if x == 10 
---         then ((x, y), 1) else ((x,y),s)
-
-renderF1 :: [((Int, Int),Int)] -> [((Int, Int),Int)] -> [(Int, Int)] -> [((Int, Int),Int)] --GAUNA SENA MAP, NAUJA MAP, TOGGLE LISTA IR GRAZINA NAUJA MAP
-renderF1  (x:xs) newMap toggles
+--Create new map with updated values from toggled list
+updateMap :: [((Int, Int),Int)] -> [((Int, Int),Int)] -> [(Int, Int)] -> [((Int, Int),Int)]
+updateMap  (x:xs) newMap toggles
     |xs /= [] = do
-        (renderF1  xs (((f2 x toggles)):newMap) toggles) -- likusi mapa siuncia i pradzia kartu su nauju mapu
-    |xs == [] = reverse ((f2 x toggles):newMap)
-
-
---renderF1 (State l) (x:[]) = ((f2 x))
-
-
-f2 :: ((Int,Int), Int) -> [(Int,Int)] -> ((Int,Int), Int)
-f2 ((x,y),s) ((cx,cy):cxs) = if ((x == cy) && (y == cx)) then ((x, y), 1) else f2 ((x,y),s) cxs
-f2 ((x,y),s) _ = ((x,y),s)
+        (updateMap  xs (((mapFunc x toggles)):newMap) toggles)
+    |xs == [] = reverse ((mapFunc x toggles):newMap)
     
 
-        
+--Changing values
+mapFunc :: ((Int,Int), Int) -> [(Int,Int)] -> ((Int,Int), Int)
+mapFunc ((x,y),s) ((cx,cy):cxs) = if ((x == cy) && (y == cx)) then ((x, y), 1) else mapFunc ((x,y),s) cxs
+mapFunc ((x,y),s) _ = ((x,y),s)
+    
 
--- renderF2 :: (String, Document) -> [((Int, Int),Int)] -> (String, Document)
--- renderF2 (l,ls) t = (l, renderF3 ls t)
-
--- renderF3 :: Document -> [((Int, Int),Int)] -> Document
--- renderF3 (DList (l:ls)) t = DList ((renderF4 l t):ls)
-
--- renderF4 :: Document -> [((Int, Int),Int)] -> Document
--- renderF4 (DMap (l:ls)) t = DMap (renderF5 l t :ls)
-
--- renderF5 :: (String, Document) -> [((Int, Int),Int)] -> (String, Document)
--- renderF5 (l, ls) t = (l, renderF6 ls t)
-
--- renderF6 :: Document -> [((Int, Int),Int)] -> Document
--- renderF6 (DList l) t = (DList (func6 l t))
--- --maps[((x,y),DInt)] -- 100 tuplu -> 100 reiksmiu
-
--- IMPLEMENT
--- renders your game board
--- render :: State -> String
--- render a = puttingCol (take 10 (deeper a resultArray))  ++ foo (map1 mapas array) newArray (drop 10 (deeper a resultArray))
---render a = show $ deeper a resultArray
---render a = foo $ map1 mapas array
---maps[((x,y),DInt)] -- 100 tuplu -> 100 reiksmiu
-
---FORMATING MAP
-newArray :: String
-newArray = ""
-
+--Map string fromatting
 puttingCol :: [Int] -> String
 puttingCol (x:xs) = (show x ++ " ") ++ puttingCol xs
 puttingCol _ = "\n____________________\n"
 
-foo :: [Int] -> String -> [Int] -> String
-foo (x:xs) newArray (y:ys)
-    | x /= 10 = newArray ++ show x ++ " " ++ foo xs newArray (y:ys)
-    | otherwise = newArray ++  "| " ++ show y ++ "\n" ++ foo xs newArray ys
-foo _ _ _ = ""
+
+--Map values to string and formatting
+puttingValues :: [Int] -> String -> [Int] -> String
+puttingValues (x:xs) newArray (y:ys)
+    | x /= 10 = newArray ++ show x ++ " " ++ puttingValues xs newArray (y:ys)
+    | otherwise = newArray ++  "| " ++ show y ++ "\n" ++ puttingValues xs newArray ys
+puttingValues _ _ _ = ""
 
 
 
-toggledCords :: [(Int, Int)]
-toggledCords = []
-
-
+--Gets toggled coordinate values from state and puts them into list 
 getToggles :: State -> [(Int, Int)] -> [(Int, Int)]
-getToggles (State (l:ls)) cords = gT1 l cords
+getToggles (State (l:ls)) cords = getTogglesFunc1 l cords
 
-gT1 :: (String, Document)  -> [(Int, Int)] -> [(Int, Int)] --gauna game,DList
-gT1 (l,ls) cords = gT2 ls cords
+getTogglesFunc1 :: (String, Document)  -> [(Int, Int)] -> [(Int, Int)]
+getTogglesFunc1 (l,ls) cords = getTogglesFunc2 ls cords
 
-gT2 :: Document  -> [(Int, Int)] -> [(Int, Int)] --gauna Dlist
-gT2 (DList (l:_)) cords = gT3 l cords
+getTogglesFunc2 :: Document  -> [(Int, Int)] -> [(Int, Int)]
+getTogglesFunc2 (DList (l:_)) cords = getTogglesFunc3 l cords
 
-gT3 :: Document  -> [(Int, Int)] -> [(Int, Int)] --gauna DMap
-gT3 (DMap (l:_)) cords = gT4 l cords
+getTogglesFunc3 :: Document  -> [(Int, Int)] -> [(Int, Int)]
+getTogglesFunc3 (DMap (l:_)) cords = getTogglesFunc4 l cords
 
-gT4 :: (String, Document)  -> [(Int,  Int)] -> [(Int, Int)] --gauna occupied cells ir DList
-gT4 (_,DList []) cords = cords
-gT4 (_,ls) cords = gT5 ls cords
+getTogglesFunc4 :: (String, Document)  -> [(Int,  Int)] -> [(Int, Int)]
+getTogglesFunc4 (_,DList []) cords = cords
+getTogglesFunc4 (_,ls) cords = getTogglesFunc5 ls cords
 
-gT5 :: Document  -> [(Int, Int)] -> [(Int, Int)]
-gT5 (DList (x:xs)) cords
-    | xs /= [] = do      --gauna DList [cia daug listu [(col, x)(row, y)]], reikia dar ir su xs padaryt rekursija
-         gT5  (DList xs) (gT6 x cords)
-    | xs == [] = gT6 x cords
+getTogglesFunc5 :: Document  -> [(Int, Int)] -> [(Int, Int)]
+getTogglesFunc5 (DList (x:xs)) cords
+    | xs /= [] = do
+         getTogglesFunc5  (DList xs) (getTogglesFunc6 x cords)
+    | xs == [] = getTogglesFunc6 x cords
 
-
-gT6 :: Document  -> [(Int, Int)] -> [(Int, Int)]
-gT6 (DMap [(_,DInteger x),(_,DInteger y)]) cords = do
+getTogglesFunc6 :: Document  -> [(Int, Int)] -> [(Int, Int)]
+getTogglesFunc6 (DMap [(_,DInteger x),(_,DInteger y)]) cords = do
     (x,y):cords
-gT6 _ cords = (-1,-1):cords
+getTogglesFunc6 _ cords = (-1,-1):cords
 
 
--- renderF1 :: [((Int, Int),Int)] -> [((Int, Int),Int)] -> (Int,Int) -> [((Int, Int),Int)]
--- renderF1  (x:xs) n f
---     |xs /= [] = do
---         (renderF1  xs (((f2 x f)):n) f) -- likusi mapa siuncia i pradzia kartu su nauju mapu
---     |xs == [] = reverse ((f2 x f):n)
 
---gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList []), ("hints", DList [])], d ]) : l
+--Create Check from state
+getCheck:: State -> Check -> Check
+getCheck (State (l:ls)) check = getCheckFunc1 l check
 
+getCheckFunc1 :: (String, Document)  -> Check -> Check --gauna game,DList
+getCheckFunc1 (l,ls) check = getCheckFunc2 ls check
 
-    --State $ ("Toggle", DList [DMap ([("col", DInteger (read x)), ("row",DInteger (read y))])]) : l
-    --1 dmap (toggle, dlist[dint, dint])
-    --2 (x:xs) s=="toggle", dlist : naujas 
-    --3
---Coord 0 1, Coord 2 1, Coord 4 1, Coord 5 1, Coord 7 2, Coord 8 2, Coord 0 3, Coord 0 4, Coord 0 8, Coord 9 8, Coord 3 4, Coord 3 5, Coord 3 6,Coord 3 7, Coord 5 5, Coord 6 5, Coord 7 5, Coord 5 7, Coord 6 7,Coord 7 7
---
--- IMPLEMENT
--- Make check from current state
-mkCheck :: State -> Check
-mkCheck _ = Check [Coord 0 1, Coord 2 1, Coord 7 1, Coord 8 1, Coord 0 3, Coord 0 4, Coord 0 8, Coord 9 8, Coord 3 4, Coord 3 5, Coord 3 6,Coord 3 7, Coord 5 5, Coord 6 5, Coord 7 5, Coord 5 7, Coord 6 7,Coord 7 7]
+getCheckFunc2 :: Document  -> Check -> Check --gauna Dlist
+getCheckFunc2 (DList (l:_)) check = getCheckFunc3 l check
 
+getCheckFunc3 :: Document  -> Check -> Check --gauna DMap
+getCheckFunc3 (DMap (l:_)) check = getCheckFunc4 l check
 
--- IMPLEMENT
--- Toggle state's value
--- Receive raw user input tokens
-toggle :: State -> [String] -> State
-toggle (State (l:ls)) t = State ((func1 l t) : ls)
+getCheckFunc4 :: (String, Document)  -> Check -> Check --gauna occupied cells ir DList
+getCheckFunc4 (_,ls) check = getCheckFunc5 ls check
 
-func1 :: (String, Document) -> [String] -> (String, Document)
-func1 (l,ls) t = (l, func2 ls t)
+getCheckFunc5 :: Document  -> Check -> Check
+getCheckFunc5 (DList (x:xs)) (Check c)
+    | xs /= [] = do      --gauna DList [cia daug listu [(col, x)(row, y)]], reikia dar ir su xs padaryt rekursija
+         getCheckFunc5  (DList xs) (Check (getCheckFunc6 x c))
+    | xs == [] = Check (getCheckFunc6 x c)
+getCheckFunc5 _ (Check c) = Check c
 
-func2 :: Document -> [String] -> Document
-func2 (DList (l:ls)) t = DList ((func3 l t):ls)
-
-func3 :: Document -> [String] -> Document
-func3 (DMap (l:ls)) t = DMap (func4 l t :ls)
-
-func4 :: (String, Document) -> [String] -> (String, Document)
-func4 (l, ls) t = (l, func5 ls t)
-
-func5 :: Document -> [String] -> Document
-func5 (DList l) t = (DList (func6 l t))
-
-func6 :: [Document] -> [String] -> [Document]
-func6 l (x:y:[]) = DMap ([("col", DInteger (read x-1)), ("row",DInteger (read y-1))]):l
+getCheckFunc6 :: Document  -> [Coord] -> [Coord]
+getCheckFunc6 (DMap [(_,DInteger x),(_,DInteger y)]) z = do
+    Coord x y : z
+getCheckFunc6 _ z = z
 
 
--- Get result cells
-resultArray :: [Int]
-resultArray = []
 
+--Returns new tuple for State with toggled coordinate values in "occupied_cells"
+toggleFunc1 :: (String, Document) -> [String] -> (String, Document)
+toggleFunc1 (l,ls) t = (l, toggleFunc2 ls t)
+
+toggleFunc2 :: Document -> [String] -> Document
+toggleFunc2 (DList (l:ls)) t = DList ((toggleFunc3 l t):ls)
+
+toggleFunc3 :: Document -> [String] -> Document
+toggleFunc3 (DMap (l:ls)) t = DMap (toggleFunc4 l t :ls)
+
+toggleFunc4 :: (String, Document) -> [String] -> (String, Document)
+toggleFunc4 (l, ls) t = (l, toggleFunc5 ls t)
+
+toggleFunc5 :: Document -> [String] -> Document
+toggleFunc5 (DList l) t = (DList (toggleFunc6 l t))
+
+toggleFunc6 :: [Document] -> [String] -> [Document]
+toggleFunc6 l (x:y:[]) = DMap ([("col", DInteger (read x-1)), ("row",DInteger (read y-1))]):l
+
+
+
+--Get map values (0s and 1s)
 deeper :: State -> [Int] -> [Int]
 deeper (State (l:ls)) resultArray = deeper1 l resultArray
 
@@ -246,11 +237,8 @@ cols1 (DList (DInteger x : ls)) resultArray = cols1 (DList ls) $ x : resultArray
 cols1 _ resultArray = reverse resultArray
 
 
--- IMPLEMENT
--- Adds hint data to the game state
-hint :: State -> Document -> State
-hint (State (l:ls)) t = State ((hintFunc1 l t) : ls)
 
+--Return new tuple for state with hint coordinate values added to "occupied_cells"
 hintFunc1 :: (String, Document) -> Document -> (String, Document)
 hintFunc1 (l,ls) t = (l, hintFunc2 ls t)
 

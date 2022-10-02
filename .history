@@ -1,4 +1,32 @@
 show
+check
+check
+show
+check
+show
+check
+show
+check
+hint 2
+hint 1
+hint 9
+hint 10
+check
+check
+check
+show
+hint 10
+hint 9
+hint 8
+hint 7
+hint 6
+hint 5
+hint 4
+hint 3
+hint 2
+hint 1
+show
+show
 toggle 35
 toggle 3 4
 toggle 9 8
@@ -70,31 +98,3 @@ toggle K10
 toggle K10
 show 
 show 
-toggle K10
-toggle A1
-toggle A0
-show 
-toggle B0
-toggle A1
-toggle 
-toggle A   ff gg
-toggle A   ff
-toggle A 10
-toggle 
-toggle 
-show
-check 
-check 
-show
-check 
-check 
-check 
-check 
-check 
-check
-show
-check 
-check 
-check 
-show 
-toggle 
