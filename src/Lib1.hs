@@ -68,7 +68,7 @@ gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList [
 -- IMPLEMENT
 -- renders your game board
 render :: State -> String
-render a = puttingCol (take 10 (deeper a []))  ++ puttingValues (map1 (updateMap gameMap [] (getToggles a [])) []) "" (drop 10 (deeper a []))
+render a = puttingCol (take 10 (getResult a []))  ++ puttingValues (map1 (updateMap gameMap [] (getToggles a [])) []) "" (drop 10 (getResult a []))
 
 
 -- IMPLEMENT
@@ -163,21 +163,21 @@ getTogglesFunc6 _ cords = (-1,-1):cords
 getCheck:: State -> Check -> Check
 getCheck (State (l:ls)) check = getCheckFunc1 l check
 
-getCheckFunc1 :: (String, Document)  -> Check -> Check --gauna game,DList
+getCheckFunc1 :: (String, Document)  -> Check -> Check
 getCheckFunc1 (l,ls) check = getCheckFunc2 ls check
 
-getCheckFunc2 :: Document  -> Check -> Check --gauna Dlist
+getCheckFunc2 :: Document  -> Check -> Check
 getCheckFunc2 (DList (l:_)) check = getCheckFunc3 l check
 
-getCheckFunc3 :: Document  -> Check -> Check --gauna DMap
+getCheckFunc3 :: Document  -> Check -> Check
 getCheckFunc3 (DMap (l:_)) check = getCheckFunc4 l check
 
-getCheckFunc4 :: (String, Document)  -> Check -> Check --gauna occupied cells ir DList
+getCheckFunc4 :: (String, Document)  -> Check -> Check
 getCheckFunc4 (_,ls) check = getCheckFunc5 ls check
 
 getCheckFunc5 :: Document  -> Check -> Check
 getCheckFunc5 (DList (x:xs)) (Check c)
-    | xs /= [] = do      --gauna DList [cia daug listu [(col, x)(row, y)]], reikia dar ir su xs padaryt rekursija
+    | xs /= [] = do
          getCheckFunc5  (DList xs) (Check (getCheckFunc6 x c))
     | xs == [] = Check (getCheckFunc6 x c)
 getCheckFunc5 _ (Check c) = Check c
@@ -210,24 +210,24 @@ toggleFunc6 l (x:y:[]) = DMap ([("col", DInteger (read x-1)), ("row",DInteger (r
 
 
 
---Get map values (0s and 1s)
-deeper :: State -> [Int] -> [Int]
-deeper (State (l:ls)) resultArray = deeper1 l resultArray
+--Get given number of ship in a col and row
+getResult :: State -> [Int] -> [Int]
+getResult (State (l:ls)) resultArray = getResultFunc1 l resultArray
 
-deeper1 :: (String, Document) -> [Int] -> [Int]
-deeper1 (l, ls) resultArray = deeper2 ls resultArray
+getResultFunc1 :: (String, Document) -> [Int] -> [Int]
+getResultFunc1 (l, ls) resultArray = getResultFunc2 ls resultArray
 
-deeper2 :: Document -> [Int] -> [Int]
-deeper2 (DList [l,ls]) resultArray = deeper3 ls resultArray
+getResultFunc2 :: Document -> [Int] -> [Int]
+getResultFunc2 (DList [l,ls]) resultArray = getResultFunc3 ls resultArray
 
-deeper3 :: Document -> [Int] -> [Int]
-deeper3 (DMap (l:ls)) resultArray = deeper4 ls resultArray
+getResultFunc3 :: Document -> [Int] -> [Int]
+getResultFunc3 (DMap (l:ls)) resultArray = getResultFunc4 ls resultArray
 
-deeper4 :: [(String, Document)] -> [Int] -> [Int]
-deeper4 (l:ls) resultArray = cols l resultArray ++ deeper5 ls resultArray
+getResultFunc4 :: [(String, Document)] -> [Int] -> [Int]
+getResultFunc4 (l:ls) resultArray = cols l resultArray ++ getResultFunc5 ls resultArray
 
-deeper5 :: [(String, Document)] -> [Int] -> [Int]
-deeper5 (l:ls) resultArray = cols l resultArray
+getResultFunc5 :: [(String, Document)] -> [Int] -> [Int]
+getResultFunc5 (l:ls) resultArray = cols l resultArray
 
 cols :: (String, Document) -> [Int] -> [Int]
 cols (l,ls) resultArray = cols1 ls resultArray
