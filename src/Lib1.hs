@@ -4,15 +4,13 @@ module Lib1(
 ) where
 
 import Types
-import Data.Vector.Internal.Check (check)
-
 
 --GAME INFO
 --
 --Coordinates are from 1 to 10 and start from top left corner
 --
 --toggle 
---Function takes two Int arguments with values from 1 to 10 (If not - game crashes). It toggles the coordinates value in the map (Value cannot be untoggled...)
+--Function takes two Int arguments with values from 1 to 10 (If not - game crashes). It toggles the coordinates value in the map.
 --
 --hint
 --Function takes one Int argument (If not - game crashes). It automatically toggles the coordinates. 
@@ -23,7 +21,6 @@ import Data.Vector.Internal.Check (check)
 --
 --check
 --Function returns if you solved the puzzle. There are two ways to solve it, but check only recognizes one of the ways to solve it. 
---Also if you toggle the same coordinate twice, or you toggle the coordinate which is already a hint, it will not recognize it as the solution.
 --
 --Made by Rokas Čebatorius, Arnas Klimašauskas, Vytautas Krupavičius, Ugnius Motiejunas
 
@@ -88,7 +85,7 @@ hint (State (l:ls)) t = State ((hintFunc1 l t) : ls)
 -- Make check from current state
 -- Only works with one answer 
 mkCheck :: State -> Check
-mkCheck a = (getCheck a (Check []))
+mkCheck a = (getCheck (updateMap gameMap [] (getToggles a [])) (Check []))
 
 
 
@@ -110,7 +107,7 @@ updateMap  (x:xs) newMap toggles
 
 --Changing values
 mapFunc :: ((Int,Int), Int) -> [(Int,Int)] -> ((Int,Int), Int)
-mapFunc ((x,y),s) ((cx,cy):cxs) = if ((x == cy) && (y == cx)) then ((x, y), 1) else mapFunc ((x,y),s) cxs
+mapFunc ((x,y),s) ((cx,cy):cxs) = if ((x == cy) && (y == cx)) then mapFunc ((x, y), if s == 0 then 1 else 0) cxs else mapFunc ((x,y),s) cxs
 mapFunc ((x,y),s) _ = ((x,y),s)
     
 
@@ -159,33 +156,17 @@ getTogglesFunc6 _ cords = (-1,-1):cords
 
 
 
---Create Check from state
-getCheck:: State -> Check -> Check
-getCheck (State (l:ls)) check = getCheckFunc1 l check
-
-getCheckFunc1 :: (String, Document)  -> Check -> Check
-getCheckFunc1 (l,ls) check = getCheckFunc2 ls check
-
-getCheckFunc2 :: Document  -> Check -> Check
-getCheckFunc2 (DList (l:_)) check = getCheckFunc3 l check
-
-getCheckFunc3 :: Document  -> Check -> Check
-getCheckFunc3 (DMap (l:_)) check = getCheckFunc4 l check
-
-getCheckFunc4 :: (String, Document)  -> Check -> Check
-getCheckFunc4 (_,ls) check = getCheckFunc5 ls check
-
-getCheckFunc5 :: Document  -> Check -> Check
-getCheckFunc5 (DList (x:xs)) (Check c)
+--Create Check from map
+getCheck:: [((Int, Int),Int)] -> Check -> Check
+getCheck (x:xs) (Check c) 
     | xs /= [] = do
-         getCheckFunc5  (DList xs) (Check (getCheckFunc6 x c))
-    | xs == [] = Check (getCheckFunc6 x c)
-getCheckFunc5 _ (Check c) = Check c
+        getCheck xs (Check (getCheckFunc1 x c))
+    | xs == [] = Check (getCheckFunc1 x c)
+getCheck _ (Check c) = (Check c) 
 
-getCheckFunc6 :: Document  -> [Coord] -> [Coord]
-getCheckFunc6 (DMap [(_,DInteger x),(_,DInteger y)]) z = do
-    Coord x y : z
-getCheckFunc6 _ z = z
+getCheckFunc1 :: ((Int, Int),Int)  -> [Coord] -> [Coord]
+getCheckFunc1 ((x,y),s) c = if s == 1 then Coord y x: c else c
+getCheckFunc1 _ c = c
 
 
 
