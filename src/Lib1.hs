@@ -90,7 +90,7 @@ renderF1  (x:xs) newMap toggles
 
 
 f2 :: ((Int,Int), Int) -> [(Int,Int)] -> ((Int,Int), Int)
-f2 ((x,y),s) ((cx,cy):cxs) = if ((x == cx) && (y == cy)) then ((x, y), 1) else f2 ((x,y),s) cxs
+f2 ((x,y),s) ((cx,cy):cxs) = if ((x == cy) && (y == cx)) then ((x, y), 1) else f2 ((x,y),s) cxs
 f2 ((x,y),s) _ = ((x,y),s)
     
 
