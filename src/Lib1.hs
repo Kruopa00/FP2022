@@ -183,12 +183,12 @@ gT6 _ cords = (-1,-1):cords
     --1 dmap (toggle, dlist[dint, dint])
     --2 (x:xs) s=="toggle", dlist : naujas 
     --3
-
-
+--Coord 0 1, Coord 2 1, Coord 4 1, Coord 5 1, Coord 7 2, Coord 8 2, Coord 0 3, Coord 0 4, Coord 0 8, Coord 9 8, Coord 3 4, Coord 3 5, Coord 3 6,Coord 3 7, Coord 5 5, Coord 6 5, Coord 7 5, Coord 5 7, Coord 6 7,Coord 7 7
+--
 -- IMPLEMENT
 -- Make check from current state
 mkCheck :: State -> Check
-mkCheck _ = Check []
+mkCheck _ = Check [Coord 0 1, Coord 2 1, Coord 7 1, Coord 8 1, Coord 0 3, Coord 0 4, Coord 0 8, Coord 9 8, Coord 3 4, Coord 3 5, Coord 3 6,Coord 3 7, Coord 5 5, Coord 6 5, Coord 7 5, Coord 5 7, Coord 6 7,Coord 7 7]
 
 
 -- IMPLEMENT

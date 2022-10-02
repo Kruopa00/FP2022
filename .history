@@ -1,4 +1,17 @@
 show
+toggle 35
+toggle 3 4
+toggle 9 8
+toggle 0 8
+toggle 0 4
+toggle 0 3
+toggle 8 1
+toggle 7 1
+toggle 2 1
+toggle 0 1
+show
+check
+show
 toggle 3, 4
 show
 toggle 1 2
@@ -85,14 +98,3 @@ check
 check 
 show 
 toggle 
-show
-how
- show   
- show 
-hint
-show
-show
-show
-show fsdf
-draw
-draw 
