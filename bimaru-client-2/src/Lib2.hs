@@ -2,7 +2,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Lib2(renderDocument, hint, gameStart) where
 
-import Types ( ToDocument(..), Document (DMap, DList, DInteger), Check )
+import Types ( ToDocument(..), Document (DMap, DList, DInteger, DNull), Check )
 import Lib1 (State(..))
 --import Distribution.Compat.DList (DList)
 
@@ -32,10 +32,11 @@ renderDocument _ = error "Implement me"
 -- This adds game data to initial state
 -- Errors are reported via Either but not error 
 gameStart :: State -> Document -> Either String State
-gameStart (State l) d = Right $ State $ ("Game started: " ++ show d) : l
+gameStart (State l) d = Right $ State $ ("Game started: " ++ show d, DNull) : l
 
 -- IMPLEMENT
 -- Adds hint data to the game state
 -- Errors are reported via Either but not error 
 hint :: State -> Document -> Either String State
-hint (State l) h = Right $ State $ ("Hint " ++ show h) : l
+hint (State l) h = Right $ State $ ("Hint " ++ show h, DNull) : l
+
