@@ -1,4 +1,43 @@
 check
+hint 1
+hint 1 2
+check
+toggle 5 1
+toggle 1 2
+check
+toggle 5 1
+toggle 1 2
+check
+toggle 6 1
+toggle 7 2
+toggle 3 5
+check
+show
+toggle 1 2
+check
+hint 1
+hint
+show 
+check
+hint 1
+check
+check
+hint 2
+toggle 4 2
+toggle 1 2
+check
+hint 2
+toggle 1 2
+check
+check
+hint 100
+show 100
+hint 6
+hint 5
+show
+hint 1
+show
+check
 show
 check
 check
