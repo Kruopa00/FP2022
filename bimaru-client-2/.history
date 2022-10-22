@@ -1,3 +1,57 @@
+hint 0
+hint 2
+hint 1
+hint 0
+hint 2
+hint 1
+hint 0
+show
+hint 1
+show
+hint 0
+show
+check
+show
+hint 0
+check
+show
+hint 1
+hint 0
+hint 10
+hint 1
+show 
+check
+show
+toggle 1 2
+show
+toggle 1 2
+show
+hint 1
+show
+toggle 4 5
+check
+show
+hint 4
+hint 3
+hint 2
+show
+hint 1
+show
+toggle 10 10
+toggle 1 2
+show
+hint 1
+show
+toggle 1 2
+show
+check
+show
+toggle 10 10
+show
+toggle 4 2
+toggle 1 2
+show
+stack run bimaru-client-2 -- 4c182baf-e244-431f-9582-5eed5345d89f
 check
 hint 1
 hint 1 2
@@ -44,6 +98,3 @@ check
 show
 check
 check
-show
-hint 1
-show

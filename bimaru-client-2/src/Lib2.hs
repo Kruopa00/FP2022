@@ -4,6 +4,7 @@ module Lib2(renderDocument, hint, gameStart) where
 
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DNull), Check(..), Coord(..) )
 import Lib1 (State(..))
+import Data.Either (Either(Left))
 
 
 -- IMPLEMENT
@@ -39,9 +40,6 @@ check' _ _ = []
 coordGet :: Coord -> Document
 coordGet (Coord x y) = DMap[("col",DInteger x),("row",DInteger y)]
 
--- KODEL VEIKIA CHECK SU TOGGLE, BET NEVEIKIA, KAI SU HINT!??????
-
-
 -- IMPLEMENT
 -- Renders document to yaml
 renderDocument :: Document -> String
@@ -59,11 +57,17 @@ gameStart _ _ = Left $ "Something went wrong while starting the game!"
 -- IMPLEMENT
 -- Adds hint data to the game state
 -- Errors are reported via Either but not error 
-hint :: State -> Document -> Either String State
-hint (State l) h = Right $ State $ ("Hint " ++ show h, DNull) : l
-hint _ _ = Left $ "Something went wrong with hints!"
+-- hint :: State -> Document -> Either String State
+-- hint (State l) h = Right $ State $ ("Hint " ++ show h, DNull) : l
+-- hint _ _ = Left $ "Something went wrong with hints!"
 --hint (State (l:ls)) t = Right $ State (hintFunc1 l t : ls)
 
+hint :: State -> Document -> Either String State
+--hint _ d = error (show d)
+
+hint _ (DMap[(_,DNull)]) = Left ("Empty hints")
+hint (State (l:ls)) t = Right $ State (hintFunc1 l t : ls)
+hint _ _ = Left $ "Something went wrong with hints!"
 
 --Return new tuple for state with hint coordinate values added to "occupied_cells"
 hintFunc1 :: (String, Document) -> Document -> (String, Document)
@@ -101,4 +105,3 @@ hintFunc9 _ = DMap []
 
 hintFunc10 :: (String, Document) -> Document
 hintFunc10 (_,ls) = ls
-
