@@ -5,6 +5,8 @@ module Lib2(renderDocument, hint, gameStart) where
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DNull), Check(..), Coord(..) )
 import Lib1 (State(..))
 import Data.Either (Either(Left))
+import Data.ByteString (putStr)
+import Data.String (String)
 
 
 -- IMPLEMENT
@@ -28,7 +30,7 @@ import Data.Either (Either(Left))
 
 
 instance ToDocument Check where
-    toDocument (Check x) = DList (check' x [])
+    toDocument (Check x) = DMap("coords",DList (check' x []))
 
 
 check' :: [Coord] -> [Document] ->  [Document]
@@ -40,10 +42,34 @@ check' _ _ = []
 coordGet :: Coord -> Document
 coordGet (Coord x y) = DMap[("col",DInteger x),("row",DInteger y)]
 
+str :: String
+str = ""
+
 -- IMPLEMENT
 -- Renders document to yaml
 renderDocument :: Document -> String
-renderDocument x = error (show "==== " ++ show x ++ "====")
+renderDocument (DList x) = "---\ncoords:" ++ (recurseCords x str)
+
+recurseCords :: [Document] -> String -> String
+-- recurseCords (x:xs) str
+--     | xs /= [] = recurseCords xs (str ++ parseCords x)
+--     | xs == [] = str ++ parseCords x
+
+    
+recurseCords (x:xs) str = recurseCords xs (str ++ parseCords x)
+recurseCords (x:[]) str = str ++ parseCords x
+
+parseCords :: Document -> String 
+parseCords (DMap[(sx,DInteger x),(sy,DInteger y)]) = "\n- " ++ sx ++ ": " ++ show x ++ "\n- " ++ sy ++ ": " ++ show y
+
+
+
+--renderDocument _ = "---\ncoords:\n- col: 1\n  row: 6\n- col: 1\n  row: 9\n- col: 9\n  row: 2"
+--renderDocument _ = ("---\ncoords:\n- col: 1\n  row: 6\n- col: 1\n  row: 9")
+--renderDocument _ = ("---\nDList:\n- DMap:\n  - DString: col\n    DInteger: 0\n  - DString: row\n    DInteger: 1\n- DMap:\n  - DString: col\n    DInteger: 2\n  - DString: row\n    DInteger: 3")
+--renderDocument x = error (show "==== " ++ show x ++ "====")
+--renderDocument _ = "---\nDList:\n- coords:\n  - col: 1\n    row: 6\n  - col: 1\n    row: 9"
+
 
 -- IMPLEMENT
 -- This adds game data to initial state

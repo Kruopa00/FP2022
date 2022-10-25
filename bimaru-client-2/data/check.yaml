@@ -4,3 +4,38 @@ coords:
   row: 6
 - col: 1
   row: 9
+
+
+
+  DMap[("coords",DList[DMap])]
+
+keliam jei DMap DList
+nekeliam jei DInt, DString
+
+DMap[("col", DInt 1),("row", DInt)]
+
+
+DOCUMENT
+
+FUNCKIJA document
+DList[x:xs] = print \n- x, 
+              Dlist[xs]
+
+DMap[(t:ts):xs] = print \nt:,
+                 tikrinam ts. ts?single == print ts
+                              ts?listed == \n- work ts 
+
+
+DNull = null
+DString = string
+DInteger = DInt
+
+
+
+
+
+coords: 
+- col: 1
+  row: 2
+  
+
