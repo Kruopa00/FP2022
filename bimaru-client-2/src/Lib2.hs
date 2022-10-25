@@ -2,11 +2,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Lib2(renderDocument, hint, gameStart) where
 
-import Types ( ToDocument(..), Document (DMap, DList, DInteger, DNull), Check(..), Coord(..) )
+import Types ( ToDocument(..), Document (DMap, DList, DInteger, DString, DNull), Check(..), Coord(..) )
 import Lib1 (State(..))
-import Data.Either (Either(Left))
-import Data.ByteString (putStr)
-import Data.String (String)
+
+
 
 
 -- IMPLEMENT
@@ -30,7 +29,7 @@ import Data.String (String)
 
 
 instance ToDocument Check where
-    toDocument (Check x) = DMap("coords",DList (check' x []))
+    toDocument (Check x) = DMap [("coords",DList (check' x []))]
 
 
 check' :: [Coord] -> [Document] ->  [Document]
@@ -48,19 +47,39 @@ str = ""
 -- IMPLEMENT
 -- Renders document to yaml
 renderDocument :: Document -> String
-renderDocument (DList x) = "---\ncoords:" ++ (recurseCords x str)
+renderDocument x =  error  ("---\n" ++ (renderDocumentRecursive x 0 ""))
 
-recurseCords :: [Document] -> String -> String
--- recurseCords (x:xs) str
---     | xs /= [] = recurseCords xs (str ++ parseCords x)
---     | xs == [] = str ++ parseCords x
+renderDocumentRecursive :: Document -> Int -> String -> String
+renderDocumentRecursive (DMap ((x,xs):xss)) c string = do
+    renderDocumentRecursive xs (c+1) (string ++ x ++ ": \n" ++ (duplicate "  " c)) ++ renderDocumentRecursive (DMap xss) c string
+renderDocumentRecursive (DList (x:xs)) c string =  do
+    renderDocumentRecursive x (c+1) (string ++ "- ") ++ renderDocumentRecursive (DList xs) c string
+renderDocumentRecursive (DInteger x) c string = do
+    string ++ show x
+renderDocumentRecursive (DString x) c string = do
+    string ++ x
+renderDocumentRecursive (DNull) c string = do
+    string ++ "null"
+renderDocumentRecursive _ c string = string
+
+
+
+duplicate :: String -> Int -> String
+duplicate string n = concat $ replicate n string
+
+-- renderDocument (DList x) = "---\ncoords:" ++ (recurseCords x str)
+
+-- recurseCords :: [Document] -> String -> String
+-- -- recurseCords (x:xs) str
+-- --     | xs /= [] = recurseCords xs (str ++ parseCords x)
+-- --     | xs == [] = str ++ parseCords x
 
     
-recurseCords (x:xs) str = recurseCords xs (str ++ parseCords x)
-recurseCords (x:[]) str = str ++ parseCords x
+-- recurseCords (x:xs) str = recurseCords xs (str ++ parseCords x)
+-- recurseCords (x:[]) str = str ++ parseCords x
 
-parseCords :: Document -> String 
-parseCords (DMap[(sx,DInteger x),(sy,DInteger y)]) = "\n- " ++ sx ++ ": " ++ show x ++ "\n- " ++ sy ++ ": " ++ show y
+-- parseCords :: Document -> String 
+-- parseCords (DMap[(sx,DInteger x),(sy,DInteger y)]) = "\n- " ++ sx ++ ": " ++ show x ++ "\n- " ++ sy ++ ": " ++ show y
 
 
 
@@ -86,7 +105,7 @@ gameStart _ _ = Left $ "Something went wrong while starting the game!"
 -- hint :: State -> Document -> Either String State
 -- hint (State l) h = Right $ State $ ("Hint " ++ show h, DNull) : l
 -- hint _ _ = Left $ "Something went wrong with hints!"
---hint (State (l:ls)) t = Right $ State (hintFunc1 l t : ls)
+-- hint (State (l:ls)) t = Right $ State (hintFunc1 l t : ls)
 
 hint :: State -> Document -> Either String State
 --hint _ d = error (show d)
