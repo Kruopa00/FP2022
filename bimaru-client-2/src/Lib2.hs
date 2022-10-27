@@ -32,11 +32,11 @@ renderDocument _ = error "Implement me"
 -- This adds game data to initial state
 -- Errors are reported via Either but not error 
 gameStart :: State -> Document -> Either String State
-gameStart (State l) d = Right $ State $ ("Game started: " ++ show d, DNull) : l
+gameStart (State l) d = Right $ State $ ("Game", DList [DMap [("occupied_cells", DList [])], d ]) : l
 
 -- IMPLEMENT
 -- Adds hint data to the game state
 -- Errors are reported via Either but not error 
 hint :: State -> Document -> Either String State
-hint (State l) h = Right $ State $ ("Hint " ++ show h, DNull) : l
+hint (State l:ls) t = Right $ State $ (hintFunc1 l t : ls)
 

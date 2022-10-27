@@ -1,4 +1,9 @@
 show
+toggle a a
+show
+toggle 5 5
+show
+show
 check
 check
 show
@@ -93,8 +98,3 @@ show
 toggle B1
 toggle A10
 show
-toggle J10
-toggle K10
-toggle K10
-show 
-show 

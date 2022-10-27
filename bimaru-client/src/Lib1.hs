@@ -50,13 +50,13 @@ emptyState = State [("Initial state", DNull)]
 -- IMPLEMENT
 -- This adds game data to initial state 
 gameStart :: State -> Document -> State
-gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList [])], d ]) : l
+gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList [])], d]) : l
 
 
 -- IMPLEMENT
 -- renders your game board
 render :: State -> String
-render a = puttingCol (take 10 (getResult a []))  ++ puttingValues (map1 (updateMap gameMap [] (getToggles a [])) []) "" (drop 10 (getResult a []))
+render a = show a
 
 
 -- IMPLEMENT
@@ -167,6 +167,7 @@ getCheckFunc1 ((x,y),s) c = if s == 1 then Coord y x: c else c
 
 
 
+
 --Returns new tuple for State with toggled coordinate values in "occupied_cells"
 toggleFunc1 :: (String, Document) -> [String] -> (String, Document)
 toggleFunc1 (l,ls) t = (l, toggleFunc2 ls t)
@@ -189,7 +190,6 @@ toggleFunc5 _ _ = DList []
 toggleFunc6 :: [Document] -> [String] -> [Document]
 toggleFunc6 l [x, y] = DMap [("col", DInteger (read x-1)), ("row",DInteger (read y-1))]:l
 toggleFunc6 l _ = l
-
 
 
 --Get given number of ship in a col and row
