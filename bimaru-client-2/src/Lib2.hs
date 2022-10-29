@@ -4,6 +4,8 @@ module Lib2(renderDocument, hint, gameStart) where
 
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DString, DNull), Check(..), Coord(..) )
 import Lib1 (State(..))
+import Data.String (String)
+import Distribution.Compat.CharParsing (CharParsing(string))
 
 
 
@@ -45,49 +47,56 @@ str :: String
 str = ""
 
 -- IMPLEMENT
--- Renders document to yaml
+-- Renders document to yamln
 renderDocument :: Document -> String
 renderDocument x =  error  ("---\n" ++ (renderDocumentRecursive x 0 ""))
-
 renderDocumentRecursive :: Document -> Int -> String -> String
-renderDocumentRecursive (DMap ((x,xs):xss)) c string = do
-    renderDocumentRecursive xs (c+1) (string ++ x ++ ": \n" ++ (duplicate "  " c)) ++ renderDocumentRecursive (DMap xss) c string
-renderDocumentRecursive (DList (x:xs)) c string =  do
-    renderDocumentRecursive x (c+1) (string ++ "- ") ++ renderDocumentRecursive (DList xs) c string
+
+renderDocumentRecursive (DMap x) c string = do
+    renderMap (DMap x) c string
+
+renderDocumentRecursive (DList x) c string = do
+    renderList (DList x) c (string)
+
 renderDocumentRecursive (DInteger x) c string = do
     string ++ show x
+
 renderDocumentRecursive (DString x) c string = do
     string ++ x
+
 renderDocumentRecursive (DNull) c string = do
     string ++ "null"
+
 renderDocumentRecursive _ c string = string
+
+-- ateina vienas listo elementas
+renderList :: Document -> Int -> String -> String
+renderList (DList (x:xs)) c string = renderList (DList xs) (c) ((renderList x (c) (string ++ (duplicate "  " c) ++ "- ")))
+renderList (DMap ((x,xs):[])) c string =  (renderMap xs c (string ++  x ++ ": "))
+renderList (DMap ((x,xs):xss)) c string = renderList (DMap xss) c ((renderMap xs c (string ++  x ++ ": ")) ++ "\n" ++ (duplicate "  " c))
+renderList (DInteger x) c string = string ++ show x
+renderList (DString x) c string = string 
+renderList (DNull) c string = string
+renderList _ _ string = string
+
+-- DMAP[("Coords", DList[DMap[(col,1),(row,1)],DMap[]])]
+
+
+-- ateina vieno dmapo tuplo document
+renderMap :: Document -> Int -> String -> String
+renderMap (DList (x:xs)) c string = renderMap (DList xs) c (renderList x (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
+renderMap (DMap ((x,DMap xs):xss)) c string = renderMap (DMap xss) c (renderMap (DMap xs) (c+1) (string ++ x ++ ": " ++ "\n" ++ (duplicate "  " (c+1))))
+renderMap (DMap ((x,xs):xss)) c string = renderMap (DMap xss) c (renderMap xs (c) (string ++ x ++ ": "))
+renderMap (DInteger x) c string = string ++ show x 
+renderMap (DString x) c string = string 
+renderMap (DNull) c string = string
+renderMap _ _ string = string
+
 
 
 
 duplicate :: String -> Int -> String
 duplicate string n = concat $ replicate n string
-
--- renderDocument (DList x) = "---\ncoords:" ++ (recurseCords x str)
-
--- recurseCords :: [Document] -> String -> String
--- -- recurseCords (x:xs) str
--- --     | xs /= [] = recurseCords xs (str ++ parseCords x)
--- --     | xs == [] = str ++ parseCords x
-
-    
--- recurseCords (x:xs) str = recurseCords xs (str ++ parseCords x)
--- recurseCords (x:[]) str = str ++ parseCords x
-
--- parseCords :: Document -> String 
--- parseCords (DMap[(sx,DInteger x),(sy,DInteger y)]) = "\n- " ++ sx ++ ": " ++ show x ++ "\n- " ++ sy ++ ": " ++ show y
-
-
-
---renderDocument _ = "---\ncoords:\n- col: 1\n  row: 6\n- col: 1\n  row: 9\n- col: 9\n  row: 2"
---renderDocument _ = ("---\ncoords:\n- col: 1\n  row: 6\n- col: 1\n  row: 9")
---renderDocument _ = ("---\nDList:\n- DMap:\n  - DString: col\n    DInteger: 0\n  - DString: row\n    DInteger: 1\n- DMap:\n  - DString: col\n    DInteger: 2\n  - DString: row\n    DInteger: 3")
---renderDocument x = error (show "==== " ++ show x ++ "====")
---renderDocument _ = "---\nDList:\n- coords:\n  - col: 1\n    row: 6\n  - col: 1\n    row: 9"
 
 
 -- IMPLEMENT
