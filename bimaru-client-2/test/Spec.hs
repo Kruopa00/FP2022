@@ -71,7 +71,6 @@ listInListInList = unlines[
      ,"- 1"
      ,"- 2"
   ]
-
 gameStartTests :: TestTree
 gameStartTests = testGroup "Test start document" []
 
