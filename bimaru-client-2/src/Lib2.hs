@@ -1,34 +1,9 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Lib2(renderDocument, hint, gameStart) where
+module Lib2(renderDocument, hint, gameStart, renderDocumentRecursive) where
 
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DString, DNull), Check(..), Coord(..) )
 import Lib1 (State(..))
-import Data.String (String)
-import Distribution.Compat.CharParsing (CharParsing(string))
-
-
-
-
--- IMPLEMENT
--- First, make Check an instance of ToDocument class
--- checkas yra coords kurias reikia paverst į document
--- o visa kita yra jau document, tai siusim tiesiai į render
-
--- instance ToDocument Check where
---     toDocument (Check a) = check' a coordMap
-
--- check' :: [Coord] -> Document -> Document
--- check' ((Coord x y):xs) cordMap
---     | xs /= [] = do
---         [DMap[("Col", DInteger x),("Row", DInteger y)]]:cordMap
---         check' xs cordMap
---     | xs == [] = [DMap[("Col", DInteger x),("Row", DInteger y)]]:cordMap
-
-
--- coordMap :: DList[DMap[(String,DInteger),(String,DInteger)]]
--- coordMap = DList[]
-
 
 instance ToDocument Check where
     toDocument (Check x) = DMap [("coords",DList (check' x []))]
@@ -43,13 +18,11 @@ check' _ _ = []
 coordGet :: Coord -> Document
 coordGet (Coord x y) = DMap[("col",DInteger x),("row",DInteger y)]
 
-str :: String
-str = ""
 
--- IMPLEMENT
--- Renders document to yamln
+
 renderDocument :: Document -> String
-renderDocument x =  error  ("---\n" ++ (renderDocumentRecursive x 0 ""))
+renderDocument x = "---\n" ++ (renderDocumentRecursive x 0 "")
+
 renderDocumentRecursive :: Document -> Int -> String -> String
 
 renderDocumentRecursive (DMap x) c string = do
@@ -58,38 +31,46 @@ renderDocumentRecursive (DMap x) c string = do
 renderDocumentRecursive (DList x) c string = do
     renderList (DList x) c (string)
 
-renderDocumentRecursive (DInteger x) c string = do
+renderDocumentRecursive (DInteger x) _ string = do
     string ++ show x
 
-renderDocumentRecursive (DString x) c string = do
+renderDocumentRecursive (DString x) _ string = do
     string ++ x
 
-renderDocumentRecursive (DNull) c string = do
+renderDocumentRecursive (DNull) _ string = do
     string ++ "null"
 
-renderDocumentRecursive _ c string = string
 
--- ateina vienas listo elementas
+
 renderList :: Document -> Int -> String -> String
-renderList (DList (x:xs)) c string = renderList (DList xs) (c) ((renderList x (c) (string ++ (duplicate "  " c) ++ "- ")))
-renderList (DMap ((x,xs):[])) c string =  (renderMap xs c (string ++  x ++ ": "))
+renderList (DList ((DList x):xs)) c string = renderList (DList xs) (c) ((renderList' (DList x) (c+1) (string ++ "- ")))
+renderList (DList (x:[])) c string = (renderList x (c) (string ++ (duplicate "  " (c)) ++ "- ") ++ "\n") -- pridejom \n 
+renderList (DList (x:xs)) c string = renderList (DList xs) (c) ((renderList x (c) (string ++ (duplicate "  " (c)) ++ "- "))++ "\n" )
+renderList (DMap ((x,xs):[])) c string =  (renderMap xs (c+1) (string ++  x ++ ": ")) -- pridejom c+1, \n
 renderList (DMap ((x,xs):xss)) c string = renderList (DMap xss) c ((renderMap xs c (string ++  x ++ ": ")) ++ "\n" ++ (duplicate "  " c))
-renderList (DInteger x) c string = string ++ show x
-renderList (DString x) c string = string 
-renderList (DNull) c string = string
+renderList (DInteger x) _ string = string ++ show x
+renderList (DString x) _ string = string ++ x 
+renderList (DNull) _ string = string ++ "null"
 renderList _ _ string = string
 
--- DMAP[("Coords", DList[DMap[(col,1),(row,1)],DMap[]])]
+
+renderList' :: Document -> Int -> String -> String
+renderList' (DList ((DList x):xs)) c string = renderList (DList xs) (c) ((renderList' (DList x) (c+1) (string ++ "- ")))
+renderList' (DList (x:xs)) c string = renderList (DList xs) (c) ((renderList x (c) (string ++ "- "))++ "\n" )
+renderList' _ _ string = string
 
 
--- ateina vieno dmapo tuplo document
+
 renderMap :: Document -> Int -> String -> String
-renderMap (DList (x:xs)) c string = renderMap (DList xs) c (renderList x (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
-renderMap (DMap ((x,DMap xs):xss)) c string = renderMap (DMap xss) c (renderMap (DMap xs) (c+1) (string ++ x ++ ": " ++ "\n" ++ (duplicate "  " (c+1))))
+renderMap (DList ((DList x):xs)) c string = renderMap (DList xs) c (renderList' (DList x) (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
+renderMap (DList (x:xs)) c string = renderMap (DList xs) (c) (renderList x (c+1) (string ++ "\n" ++ (duplicate "  " (c)) ++ "- "))
+renderMap (DMap ((x,DList xs):[])) c string =  ((renderMap (DList xs) (c) (string ++ x ++ ": "))++"\n")
+renderMap (DMap ((x,DMap xs):xss)) c string = renderMap (DMap xss) c (renderMap (DMap xs) (c+1) (string ++  x ++ ": " ++ "\n" ++ (duplicate "  " (c+1))))
+renderMap (DMap ((x,xs):[])) c string = (renderMap xs (c) (string ++ x ++ ": ")) -- jei paskutinis dmapo tuplas dedam tarpa
 renderMap (DMap ((x,xs):xss)) c string = renderMap (DMap xss) c (renderMap xs (c) (string ++ x ++ ": "))
-renderMap (DInteger x) c string = string ++ show x 
-renderMap (DString x) c string = string 
-renderMap (DNull) c string = string
+renderMap (DInteger x) _ string = string ++ show x
+renderMap (DString x) _ string = string ++ x 
+renderMap (DNull) _ string = string ++ "null"
 renderMap _ _ string = string
 
 
@@ -99,31 +80,17 @@ duplicate :: String -> Int -> String
 duplicate string n = concat $ replicate n string
 
 
--- IMPLEMENT
--- This adds game data to initial state
--- Errors are reported via Either but not error 
 gameStart :: State -> Document -> Either String State
---gameStart (State l) d = Right $ State $ ("Game started: " ++ show d, DNull) : l
+gameStart _ (DMap[]) = Left $ "Something went wrong while starting the game!"
 gameStart (State l) d = Right $ State $ ("Game", DList [DMap [("occupied_cells", DList [])], d ]) : l
-gameStart _ _ = Left $ "Something went wrong while starting the game!"
 
-
--- IMPLEMENT
--- Adds hint data to the game state
--- Errors are reported via Either but not error 
--- hint :: State -> Document -> Either String State
--- hint (State l) h = Right $ State $ ("Hint " ++ show h, DNull) : l
--- hint _ _ = Left $ "Something went wrong with hints!"
--- hint (State (l:ls)) t = Right $ State (hintFunc1 l t : ls)
 
 hint :: State -> Document -> Either String State
---hint _ d = error (show d)
 
 hint _ (DMap[(_,DNull)]) = Left ("Empty hints")
 hint (State (l:ls)) t = Right $ State (hintFunc1 l t : ls)
 hint _ _ = Left $ "Something went wrong with hints!"
 
---Return new tuple for state with hint coordinate values added to "occupied_cells"
 hintFunc1 :: (String, Document) -> Document -> (String, Document)
 hintFunc1 (l,ls) t = (l, hintFunc2 ls t)
 

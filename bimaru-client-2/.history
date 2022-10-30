@@ -1,38 +1,23 @@
 check
-hint 3
-hint 2
-hint 1
-check
-hint 2
-hint 1
-hint 1 2
+toggle 2 3
 toggle 1 2
 check
-toggle 2 5
-hint 1
-hint 1 2
-toggle 1 2
+toggle 2 3
+toggle 1 2 
 check
-hint 1
-toggle 1 2
 check
-toggle 2 4
-toggle 1 2
 check
-toggle 1 2
 check
-hint 1
-toggle 2 5
-toggle 1 2
 check
-toggle 1 2
+chekc
 check
-toggle 9 9
-hint 4
-toggle 1 2
 check
-hint 2
-toggle 5 2
+check
+check
+check
+check
+check
+check
 toggle 2 3
 toggle 1 2
 check
@@ -41,60 +26,75 @@ check
 check
 check
 check
+check
+check
+check
+toggle 3 4
+toggle 2 3
+toggle 1 2
+check
+toggle 2 3
+toggle 1 2
+toggle 3 4
+check
+toggle 3 4
+toggle 2 3
 toggle 1 2
 check
 check
 check
 check
-hint 1
-show
 check
 check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+check
+vhevk
+check
+check
+check
+toggle 3 4
+toggle 2 3
 toggle 1 2
 check
 check
 check
 check
 check
-toggle 1 2
-hint 1
-show
-check
-toggle 1 2
-hint 1
-hint ą
-show
 check
 check
+check
+check
+check
+check
+toggle 3 4
+toggle 2 3
 toggle 1 2
 check
-check
+toggle 3 4
+toggle 2 3
 toggle 1 2
 check
-hint 1 
-show
-check
-toggle 1 2
-show
-check
-show
-hint 2
-hint 1 
-toggle 10 10
-toggle 1 2
-hint 0
-hint 2
-hint 1
-hint 0
-hint 2
-hint 1
-hint 0
-show
-hint 1
-show
-hint 0
-show
-check
-show
-hint 0
-check
+toggle 4 5

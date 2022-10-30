@@ -1,10 +1,7 @@
 import Test.Tasty
 import Test.Tasty.HUnit
-import Lib2 (renderDocument, gameStart, hint)
+import Lib2 (renderDocument)
 import Types (Document(..))
-import Distribution.Types.DependencyMap (fromDepMap)
-import Data.String (String)
-import Text.Read (Lexeme(String))
 
 main :: IO ()
 main = defaultMain (testGroup "Tests" [
@@ -14,14 +11,14 @@ main = defaultMain (testGroup "Tests" [
 
 toYamlTests :: TestTree
 toYamlTests = testGroup "Document to yaml"
-  [   testCase "null" $
-        renderDocument DNull @?= "null"
-    , testCase "int" $
-        renderDocument (DInteger 5) @?= "5"
-    , testCase "list of ints" $
+  [   testCase "null" $ -- ok
+        renderDocument DNull @?= "---\nnull"
+    , testCase "int" $ -- ok
+        renderDocument (DInteger 5) @?= "---\n5"
+    , testCase "string" $ -- ok
+        renderDocument (DString "Test") @?= "---\nTest"
+    , testCase "list of ints" $ 
         renderDocument (DList [DInteger 5, DInteger 6]) @?= listOfInts
-    , testCase "string" $
-        renderDocument (String "Test") @?= "Test"
     , testCase "dmap" $
         renderDocument (DMap[("first", DInteger 5)]) @?= dMap
     , testCase "list of ints in a list" $
@@ -30,21 +27,29 @@ toYamlTests = testGroup "Document to yaml"
         renderDocument (DList [DMap[("first",DList [DInteger 1, DInteger 2])], DInteger 1, DInteger 2, DInteger 3]) @?= listOfLists   
     , testCase "list In list In List" $
         renderDocument (DList [DList [DList [DInteger 5, DInteger 6],DInteger 3, DInteger 4],DInteger 1, DInteger 2]) @?= listInListInList
+    , testCase "checkFormat" $
+        renderDocument (DMap[("Coords", DList[DMap[("col",DInteger 1),("row",DInteger 2)],DMap[("col",DInteger 3),("row",DInteger 4)],DMap[("col",DInteger 5),("row",DInteger 6)]])]) @?= checkTest
+    , testCase "dmap in dmap" $
+        renderDocument (DMap[("first", DMap[("third", DList[DInteger 1])]),("second", DMap[("forth", DList[DInteger 2])])]) @?= dmapInDmap 
+    , testCase "dlist in dmap" $ 
+        renderDocument (DMap[("first", DList[DMap[("second", DList [DInteger 1, DInteger 2])]])]) @?= dlistInDmap    
+    , testCase "dlists in dlist" $
+        renderDocument (DList[DList[DList[DMap[("first", DList[DInteger 1, DInteger 2])]]], DInteger 3, DInteger 4]) @?= dlistsInList  
+
+
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
   ]
 listOfInts :: String
 listOfInts = unlines [
-      "---"
-    , "- 5"
-    , "- 6"
+      "---",
+      "- 5",
+      "- 6"
   ]
 dMap :: String
-dMap = unlines[
-      "---"
-    , "first: 5"
-  ]
+dMap = "---\nfirst: 5"
+
 listInList :: String
 listInList = unlines[
       "---"
@@ -54,8 +59,8 @@ listInList = unlines[
 listOfLists :: String
 listOfLists = unlines[
       "---"
-     ,"- first"
-     ,"- - 1"
+     ,"- first: "
+     ,"  - 1"
      ,"  - 2"
      ,"- 1"
      ,"- 2"
@@ -66,11 +71,51 @@ listInListInList = unlines[
       "---"
      ,"- - - 5"
      ,"    - 6"
-     ,"  -  3"
-     ,"  -  4"
+     ,"  - 3"
+     ,"  - 4"
      ,"- 1"
      ,"- 2"
   ]
+dmapInDmap :: String
+dmapInDmap = unlines[
+      "---",
+      "first: ",
+      "  third: ",
+      "  - 1",
+      "second: ",
+      "  forth: ",
+      "  - 2"
+  ]
+dlistInDmap :: String
+dlistInDmap = unlines[
+      "---",
+      "first: ",
+      "- second: ",
+      "    - 1",
+      "    - 2"
+  ]
+dlistsInList :: String
+dlistsInList = unlines[
+      "---",
+      "- - - first: ",
+      "      - 1",
+      "      - 2",
+      "- 3",
+      "- 4"
+  ]
+
+checkTest :: String
+checkTest = unlines [
+      "---",
+      "Coords: ",
+      "- col: 1",
+      "  row: 2",
+      "- col: 3",
+      "  row: 4",
+      "- col: 5",
+      "  row: 6"
+  ]
+
 gameStartTests :: TestTree
 gameStartTests = testGroup "Test start document" []
 

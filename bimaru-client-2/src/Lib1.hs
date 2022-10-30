@@ -4,7 +4,7 @@ module Lib1(
 ) where
 
 import Types
-import Types (Document)
+
 
 -- This is a state of your game.
 -- It must contain all values you might need during a game:
