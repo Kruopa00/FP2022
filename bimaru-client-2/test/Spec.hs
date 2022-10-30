@@ -24,7 +24,7 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "list of ints in a list" $
         renderDocument (DList [DList [DInteger 5, DInteger 6]]) @?= listInList
     , testCase "List of Lists" $
-        renderDocument (DList [DMap[("first",DList [DInteger 1, DInteger 2])], DInteger 1, DInteger 2, DInteger 3]) @?= listOfLists   
+        renderDocument (DList [DMap[("first",DList [DInteger 1, DInteger 2])], DString "test", DInteger 2, DInteger 3]) @?= listOfLists   
     , testCase "list In list In List" $
         renderDocument (DList [DList [DList [DInteger 5, DInteger 6],DInteger 3, DInteger 4],DInteger 1, DInteger 2]) @?= listInListInList
     , testCase "checkFormat" $
@@ -34,7 +34,7 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "dlist in dmap" $ 
         renderDocument (DMap[("first", DList[DMap[("second", DList [DInteger 1, DInteger 2])]])]) @?= dlistInDmap    
     , testCase "dlists in dlist" $
-        renderDocument (DList[DList[DList[DMap[("first", DList[DInteger 1, DInteger 2])]]], DInteger 3, DInteger 4]) @?= dlistsInList  
+        renderDocument (DList[DList[DList[DMap[("first", DList[DInteger 1, DString "test"])]]], DInteger 3, DNull]) @?= dlistsInList  
 
 
     -- IMPLEMENT more test cases:
@@ -62,7 +62,7 @@ listOfLists = unlines[
      ,"- first: "
      ,"  - 1"
      ,"  - 2"
-     ,"- 1"
+     ,"- test"
      ,"- 2"
      ,"- 3"
   ]
@@ -99,9 +99,9 @@ dlistsInList = unlines[
       "---",
       "- - - first: ",
       "      - 1",
-      "      - 2",
+      "      - test",
       "- 3",
-      "- 4"
+      "- null"
   ]
 
 checkTest :: String
