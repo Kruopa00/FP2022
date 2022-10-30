@@ -14,14 +14,14 @@ check' (x:xs) dab
     | xs /= [] = check' xs ((coordGet x) : dab)
     | xs == [] = coordGet x : dab
 check' _ _ = []
-    
+
 coordGet :: Coord -> Document
 coordGet (Coord x y) = DMap[("col",DInteger x),("row",DInteger y)]
 
 
 
 renderDocument :: Document -> String
-renderDocument x = "---\n" ++ (renderDocumentRecursive x 0 "")
+renderDocument x = "---\n" ++ renderDocumentRecursive x 0 ""
 
 renderDocumentRecursive :: Document -> Int -> String -> String
 
@@ -43,33 +43,33 @@ renderDocumentRecursive (DNull) _ string = do
 
 
 renderList :: Document -> Int -> String -> String
-renderList (DList ((DList x):xs)) c string = renderList (DList xs) (c) ((renderList' (DList x) (c+1) (string ++ "- ")))
-renderList (DList (x:[])) c string = (renderList x (c) (string ++ (duplicate "  " (c)) ++ "- ") ++ "\n") -- pridejom \n 
-renderList (DList (x:xs)) c string = renderList (DList xs) (c) ((renderList x (c) (string ++ (duplicate "  " (c)) ++ "- "))++ "\n" )
-renderList (DMap ((x,xs):[])) c string =  (renderMap xs (c+1) (string ++  x ++ ": ")) -- pridejom c+1, \n
-renderList (DMap ((x,xs):xss)) c string = renderList (DMap xss) c ((renderMap xs c (string ++  x ++ ": ")) ++ "\n" ++ (duplicate "  " c))
+renderList (DList ((DList x):xs)) c string = renderList (DList xs) c (renderList' (DList x) (c+1) (string ++ "- "))
+renderList (DList (x:[])) c string = renderList x (c) (string ++ (duplicate "  " c) ++ "- ") ++ "\n" -- pridejom \n 
+renderList (DList (x:xs)) c string = renderList (DList xs) c (renderList x c (string ++ (duplicate "  " c) ++ "- ")++ "\n" )
+renderList (DMap ((x,xs):[])) c string =  renderMap xs (c+1) (string ++  x ++ ": ") -- pridejom c+1, \n
+renderList (DMap ((x,xs):xss)) c string = renderList (DMap xss) c (renderMap xs c (string ++  x ++ ": ") ++ "\n" ++ (duplicate "  " c))
 renderList (DInteger x) _ string = string ++ show x
-renderList (DString x) _ string = string ++ x 
+renderList (DString x) _ string = string ++ x
 renderList (DNull) _ string = string ++ "null"
 renderList _ _ string = string
 
 
 renderList' :: Document -> Int -> String -> String
-renderList' (DList ((DList x):xs)) c string = renderList (DList xs) (c) ((renderList' (DList x) (c+1) (string ++ "- ")))
-renderList' (DList (x:xs)) c string = renderList (DList xs) (c) ((renderList x (c) (string ++ "- "))++ "\n" )
+renderList' (DList ((DList x):xs)) c string = renderList (DList xs) c (renderList' (DList x) (c+1) (string ++ "- "))
+renderList' (DList (x:xs)) c string = renderList (DList xs) c (renderList x c (string ++ "- ")++ "\n" )
 renderList' _ _ string = string
 
 
 
 renderMap :: Document -> Int -> String -> String
 renderMap (DList ((DList x):xs)) c string = renderMap (DList xs) c (renderList' (DList x) (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
-renderMap (DList (x:xs)) c string = renderMap (DList xs) (c) (renderList x (c+1) (string ++ "\n" ++ (duplicate "  " (c)) ++ "- "))
-renderMap (DMap ((x,DList xs):[])) c string =  ((renderMap (DList xs) (c) (string ++ x ++ ": "))++"\n")
+renderMap (DList (x:xs)) c string = renderMap (DList xs) c (renderList x (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
+renderMap (DMap ((x,DList xs):[])) c string =  (renderMap (DList xs) c (string ++ x ++ ": "))++"\n"
 renderMap (DMap ((x,DMap xs):xss)) c string = renderMap (DMap xss) c (renderMap (DMap xs) (c+1) (string ++  x ++ ": " ++ "\n" ++ (duplicate "  " (c+1))))
-renderMap (DMap ((x,xs):[])) c string = (renderMap xs (c) (string ++ x ++ ": ")) -- jei paskutinis dmapo tuplas dedam tarpa
-renderMap (DMap ((x,xs):xss)) c string = renderMap (DMap xss) c (renderMap xs (c) (string ++ x ++ ": "))
+renderMap (DMap ((x,xs):[])) c string = renderMap xs c (string ++ x ++ ": ") -- jei paskutinis dmapo tuplas dedam tarpa
+renderMap (DMap ((x,xs):xss)) c string = renderMap (DMap xss) c (renderMap xs c (string ++ x ++ ": "))
 renderMap (DInteger x) _ string = string ++ show x
-renderMap (DString x) _ string = string ++ x 
+renderMap (DString x) _ string = string ++ x
 renderMap (DNull) _ string = string ++ "null"
 renderMap _ _ string = string
 
@@ -87,7 +87,7 @@ gameStart (State l) d = Right $ State $ ("Game", DList [DMap [("occupied_cells",
 
 hint :: State -> Document -> Either String State
 
-hint _ (DMap[(_,DNull)]) = Left ("Empty hints")
+hint _ (DMap[(_,DNull)]) = Left "Empty hints"
 hint (State (l:ls)) t = Right $ State (hintFunc1 l t : ls)
 hint _ _ = Left $ "Something went wrong with hints!"
 
