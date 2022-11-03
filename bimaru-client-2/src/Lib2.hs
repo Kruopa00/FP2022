@@ -5,6 +5,7 @@ module Lib2(renderDocument, hint, gameStart, renderDocumentRecursive) where
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DString, DNull), Check(..), Coord(..) )
 import Lib1 (State(..))
 
+
 instance ToDocument Check where
     toDocument (Check x) = DMap [("coords",DList (check' x []))]
 
@@ -76,20 +77,28 @@ renderMap _ _ string = string
 
 
 
+
+
 duplicate :: String -> Int -> String
 duplicate string n = concat $ replicate n string
 
 
 gameStart :: State -> Document -> Either String State
-gameStart _ (DMap[]) = Left $ "Something went wrong while starting the game!"
-gameStart (State l) d = Right $ State $ ("Game", DList [DMap [("occupied_cells", DList [])], d ]) : l
+gameStart _ (DMap[]) = Left $ "No game start information!"
+gameStart (State l) d
+    | State l == State [("Initial state",DNull)] = Right $ State $ ("Game", DList [DMap [("occupied_cells", DList [])], d ]) : l
+    | State l /= State [("Initial state",DNull)] = Left $ "Bad initial state!"
+gameStart _ _ = Left $ "Something went wrong while starting the game!"
+
 
 
 hint :: State -> Document -> Either String State
 
-hint _ (DMap[(_,DNull)]) = Left "Empty hints"
+hint _ (DMap[(_,DNull)]) = Left "Empty hints!"
+hint _ (DMap[(string,_)]) 
+    | string /= "coords" = Left "Wrong DMap!"
+hint (State[]) _ = Left "Empty state!"
 hint (State (l:ls)) t = Right $ State (hintFunc1 l t : ls)
-hint _ _ = Left $ "Something went wrong with hints!"
 
 hintFunc1 :: (String, Document) -> Document -> (String, Document)
 hintFunc1 (l,ls) t = (l, hintFunc2 ls t)

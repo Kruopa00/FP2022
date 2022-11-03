@@ -12,7 +12,7 @@ import Types
 -- You can change the right hand side as you wish but please
 -- keep the type name as is
 data State = State [(String,Document)]
-    deriving Show
+    deriving (Show, Eq)
 
 -- Game map
 -- Format: ((col, row), value)

@@ -1,7 +1,9 @@
 import Test.Tasty
 import Test.Tasty.HUnit
-import Lib2 (renderDocument)
+import Lib2 (renderDocument, gameStart, hint)
 import Types (Document(..))
+import Lib1 (State(..))
+
 
 main :: IO ()
 main = defaultMain (testGroup "Tests" [
@@ -117,7 +119,24 @@ checkTest = unlines [
   ]
 
 gameStartTests :: TestTree
-gameStartTests = testGroup "Test start document" []
+gameStartTests = testGroup "Test start document" 
+    [    testCase "normal" $ -- ok
+            (gameStart (State [("Initial state",DNull)]) (DMap [("number_of_hints",DInteger 10),("occupied_cols",DList [DInteger 4,DInteger 0,DInteger 1,DInteger 4,DInteger 1,DInteger 3,DInteger 2,DInteger 3,DInteger 1,DInteger 1]),("occupied_rows",DList [DInteger 0,DInteger 4,DInteger 2,DInteger 1,DInteger 2,DInteger 4,DInteger 1,DInteger 4,DInteger 2,DInteger 0]),("game_setup_id",DString "4c182baf-e244-431f-9582-5eed5345d89f")])) @?= Right (State [("Game",DList [DMap [("occupied_cells",DList [])],DMap [("number_of_hints",DInteger 10),("occupied_cols",DList [DInteger 4,DInteger 0,DInteger 1,DInteger 4,DInteger 1,DInteger 3,DInteger 2,DInteger 3,DInteger 1,DInteger 1]),("occupied_rows",DList [DInteger 0,DInteger 4,DInteger 2,DInteger 1,DInteger 2,DInteger 4,DInteger 1,DInteger 4,DInteger 2,DInteger 0]),("game_setup_id",DString "4c182baf-e244-431f-9582-5eed5345d89f")]]),("Initial state",DNull)])
+        ,testCase "empty DMap" $
+            (gameStart (State[("Initial state",DNull)]) (DMap[])) @?= Left ("No game start information!")
+        ,testCase "random state" $
+            (gameStart (State[("BAD STATE", DNull)]) (DMap [("number_of_hints",DInteger 10),("occupied_cols",DList [DInteger 4,DInteger 0,DInteger 1,DInteger 4,DInteger 1,DInteger 3,DInteger 2,DInteger 3,DInteger 1,DInteger 1]),("occupied_rows",DList [DInteger 0,DInteger 4,DInteger 2,DInteger 1,DInteger 2,DInteger 4,DInteger 1,DInteger 4,DInteger 2,DInteger 0]),("game_setup_id",DString "4c182baf-e244-431f-9582-5eed5345d89f")])) @?= Left ("Bad initial state!")
+    ]
+
 
 hintTests :: TestTree
-hintTests = testGroup "Test hint document" []
+hintTests = testGroup "Test hint document" 
+    [   testCase "normal" $
+            (hint (State [("Game",DList [DMap [("occupied_cells",DList [])],DMap [("number_of_hints",DInteger 10),("occupied_cols",DList [DInteger 4,DInteger 0,DInteger 1,DInteger 4,DInteger 1,DInteger 3,DInteger 2,DInteger 3,DInteger 1,DInteger 1]),("occupied_rows",DList [DInteger 0,DInteger 4,DInteger 2,DInteger 1,DInteger 2,DInteger 4,DInteger 1,DInteger 4,DInteger 2,DInteger 0]),("game_setup_id",DString "4c182baf-e244-431f-9582-5eed5345d89f")]]),("Initial state",DNull)]) (DMap [("coords",DMap [("head",DMap [("col",DInteger 3),("row",DInteger 4)]),("tail",DNull)])])) @?= (Right (State [("Game",DList [DMap [("occupied_cells",DList [DMap [("col",DInteger 3),("row",DInteger 4)]])],DMap [("number_of_hints",DInteger 10),("occupied_cols",DList [DInteger 4,DInteger 0,DInteger 1,DInteger 4,DInteger 1,DInteger 3,DInteger 2,DInteger 3,DInteger 1,DInteger 1]),("occupied_rows",DList [DInteger 0,DInteger 4,DInteger 2,DInteger 1,DInteger 2,DInteger 4,DInteger 1,DInteger 4,DInteger 2,DInteger 0]),("game_setup_id",DString "4c182baf-e244-431f-9582-5eed5345d89f")]]),("Initial state",DNull)]))
+        ,testCase "empty hints" $
+            (hint (State [("Game",DList [DMap [("occupied_cells",DList [])],DMap [("number_of_hints",DInteger 10),("occupied_cols",DList [DInteger 4,DInteger 0,DInteger 1,DInteger 4,DInteger 1,DInteger 3,DInteger 2,DInteger 3,DInteger 1,DInteger 1]),("occupied_rows",DList [DInteger 0,DInteger 4,DInteger 2,DInteger 1,DInteger 2,DInteger 4,DInteger 1,DInteger 4,DInteger 2,DInteger 0]),("game_setup_id",DString "4c182baf-e244-431f-9582-5eed5345d89f")]]),("Initial state",DNull)]) (DMap [("coords", DNull)])) @?= Left "Empty hints!"
+        ,testCase "wrong hint DMap" $
+            (hint (State [("Game",DList [DMap [("occupied_cells",DList [])],DMap [("number_of_hints",DInteger 10),("occupied_cols",DList [DInteger 4,DInteger 0,DInteger 1,DInteger 4,DInteger 1,DInteger 3,DInteger 2,DInteger 3,DInteger 1,DInteger 1]),("occupied_rows",DList [DInteger 0,DInteger 4,DInteger 2,DInteger 1,DInteger 2,DInteger 4,DInteger 1,DInteger 4,DInteger 2,DInteger 0]),("game_setup_id",DString "4c182baf-e244-431f-9582-5eed5345d89f")]]),("Initial state",DNull)]) (DMap [("wrongMap",DMap [("head",DMap [("col",DInteger 3),("row",DInteger 4)]),("tail",DNull)])])) @?= Left "Wrong DMap!"
+        ,testCase "empty state" $
+            (hint (State []) (DMap [("coords",DMap [("head",DMap [("col",DInteger 3),("row",DInteger 4)]),("tail",DNull)])])) @?= Left "Empty state!"
+    ]
