@@ -22,13 +22,13 @@ gameMap = [((x, y), 0) | x <- [0..9], y <- [0..9]]
 
 
 -- IMPLEMENT
--- This is very initial state of your program
+-- This is very Initial_state of your program
 emptyState :: State
-emptyState = State [("Initial state", DNull)]
+emptyState = State [("Initial_state", DNull)]
 
 
 -- IMPLEMENT
--- This adds game data to initial state 
+-- This adds game data to Initial_state 
 gameStart :: State -> Document -> State
 gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList [])], d ]) : l
 

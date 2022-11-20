@@ -86,8 +86,8 @@ duplicate string n = concat $ replicate n string
 gameStart :: State -> Document -> Either String State
 gameStart _ (DMap[]) = Left $ "No game start information!"
 gameStart (State l) d
-    | State l == State [("Initial state",DNull)] = Right $ State $ ("Game", DList [DMap [("occupied_cells", DList [])], d ]) : l
-    | State l /= State [("Initial state",DNull)] = Left $ "Bad initial state!"
+    | State l == State [("Initial_state",DNull)] = Right $ State $ ("Game", DList [DMap [("occupied_cells", DList [])], d ]) : l
+    | State l /= State [("Initial_state",DNull)] = Left $ "Bad initial state!"
 gameStart _ _ = Left $ "Something went wrong while starting the game!"
 
 

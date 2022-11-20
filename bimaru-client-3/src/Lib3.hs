@@ -6,7 +6,7 @@ module Lib3(hint, gameStart, parseDocument, GameStart, Hint) where
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DString, DNull), Check(..), Coord(..), FromDocument, fromDocument )
 import Lib1 (State(..))
 import Data.Either (Either(Right, Left))
-import GHC.Base (error)
+import GHC.Base (error, when)
 import Data.Bool (Bool(True, False))
 import Data.Char
 
@@ -14,20 +14,55 @@ import Data.Char
 -- Parses a document from yaml
 parseDocument :: String -> Either String Document
 --parseDocument x = Left $ show $ parseStringUntil ':' "" x
-parseDocument x = duhas (DMap []) x 
+parseDocument x = do
+    (d, s) <- duhas (DMap []) x
+    return d
 parseDocument _ = Left "Implement me"
 
-duhas :: Document -> String -> Either String Document
+duhas :: Document -> String -> Either String (Document, String)
+duhas d "" = do
+    return (d, "") 
 duhas (DMap d) s = do
     (a, b) <- parseStringUntil ':' "" s                        -- paimam a:b, a yra stringas, b document
     (b1, flag) <- checkChar ' ' b
-    if (flag == True)
-        then do
-            (k, l) <- parseStringUntil '\n' "" b1                       -- k yra likęs tuplo vidus, l yra visi likę tuplai
-            duhas (DMap ((a, convertSingleToDoc k) :d)) l
-            --(k, l) <- parseStringUntil '\n' "" b                        -- k yra likęs tuplo vidus, l yra visi likę tuplai
+    if (flag == True) then do
+        (k, l) <- parseStringUntil '\n' "" b1                       -- k yra likęs tuplo vidus, l yra visi likę tuplai
+        (d3, s3)<- duhas (DMap ((a, convertSingleToDoc k) :d)) l
+        return (d3, s3)
+        --(k, l) <- parseStringUntil '\n' "" b                        -- k yra likęs tuplo vidus, l yra visi likę tuplai
+    else do
+        (l, flagType) <- parseUntilPlural b1
+        if (flagType) then do       -- jei true, tai DListas
+            (d1, b2) <- duhas (DList []) l
+            (d3, s3) <- duhas (DMap ((a, d1) :d)) b2
+            return (d3, s3)
         else do
-            return $ DMap d
+            return $ (DString "a", "")
+        
+duhas (DList d) s = do
+    (_, flag) <- checkChar '-' s
+    if (not flag) then do
+        return (DList d, s)
+    else do
+        (_, s1) <- parseStringUntil ' ' "" s
+        (_, flagType) <- parseUntilPlural s1
+        if (flagType == True) then do
+            --Dlistas dliste
+            (d1, s1) <- duhas (DList []) s1
+            (d2, s2) <- duhas (DList (d1:d)) s1
+            return $ (d2, s2)
+        else do         -- ateis arba DMapas, arba single reikšmė
+            (s1, s2) <- parseStringUntil '\n' "" s1
+            (s3, s4) <- parseStringUntil ':' "" s1
+            if (s4 == "") then do
+                duhas (DList ((convertSingleToDoc s3):d)) s2
+                -- reiškia s3 single reikšmė
+            else do
+                -- ateina DMap
+                --(dmap, s) <- duhas (DMap []) (s1 ++ s2)
+                --(dmap1, s1) <- duhas (DList (dmap:d)) s
+                Left "bbd"
+duhas _ _ = Left "Blogai"
     --return DString "a"
 
 convertSingleToDoc :: String -> Document
@@ -49,6 +84,15 @@ parseStringUntil ch s "" = Right (s, "")
 parseStringUntil ch s (x:xs) | ch == x = Right (s, xs)
                     | otherwise = parseStringUntil ch (s ++ [x]) xs
 parseStringUntil ch _ _ = Left "Empty"
+
+parseUntilPlural :: String -> Either String (String, Bool)                -- jei Dlistas true, jei dmapas false
+parseUntilPlural (x:xs) 
+    | x == '-' = Right (x:xs, True)
+    | isDigit x = Right (x:xs, False)
+    | isLetter x = Right (x:xs, False)
+    | otherwise = parseUntilPlural xs
+parseUntilPlural "" = Right ("", False)
+parseUntilPlural _ = Left "blogai"
 
 checkChar :: Char -> String -> Either String (String, Bool)
 checkChar ch (x:xs) | ch == x = Right (xs, True)
