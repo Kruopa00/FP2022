@@ -15,7 +15,7 @@ import Data.Char
 parseDocument :: String -> Either String Document
 --parseDocument x = Left $ show $ parseStringUntil ':' "" x
 parseDocument x = do
-    (d, s) <- duhas (DList []) "- - first:\n    - 1\n    - test\n- 3\n- null" 0
+    (d, s) <- duhas (DMap []) x 0
     return d
 parseDocument _ = Left "Implement me"
 
@@ -23,52 +23,64 @@ duhas :: Document -> String -> Integer-> Either String (Document, String)
 duhas d "" sk = do
     return (d, "") 
 duhas (DMap d) s sk = do
-    (s1, spaceCount) <- parseSpace 0 s
-    if (spaceCount < sk) then
-        return (DMap d, s)
-    else do
-        (a, b) <- parseStringUntil ':' "" s1         -- paimam a:b, a yra stringas, b document
-        (b1, flag) <- checkChar ' ' b
-        if (flag == True) then do       -- single reiksme
-            (k, l) <- parseStringUntil '\n' "" b1          -- k yra likęs tuplo vidus, l yra visi likę tuplai
-            (d3, s3) <- duhas (DMap ((a, convertSingleToDoc k) :d)) l sk
-            return (d3, s3)
-            --(k, l) <- parseStringUntil '\n' "" b               -- k yra likęs tuplo vidus, l yra visi likę tuplai
-        else do         -- listas
-            (l, flagType) <- parseUntilPlural b1
-            if (flagType) then do       -- jei true, tai DListas
-                (d1, b2) <- duhas (DList []) l sk
-                (d3, s3) <- duhas (DMap ((a, d1) :d)) b2 sk
-                return (d3, s3)
-            else do
-                (d3, s3) <- duhas (DMap []) l spaceCount
-                duhas (DMap ((a, d3) :d)) s3 sk
+    (a, b) <- parseStringUntil ':' "" s         -- paimam a:b, a yra stringas, b document
+    (b1, flag) <- checkChar ' ' b
+    if flag then do       -- single reiksme
+        (k, l) <- parseStringUntil '\n' "" b1          -- k yra likęs tuplo vidus, l yra visi likę tuplai
+        (d3, s3) <- duhas (DMap ((a, convertSingleToDoc k) :d)) l sk
+        return (d3, s3)
+        --(k, l) <- parseStringUntil '\n' "" b               -- k yra likęs tuplo vidus, l yra visi likę tuplai
+    else do         -- listas
+        (l, flagType) <- parseUntilPlural b1
+        if (flagType) then do       -- jei true, tai DListas
+            (d1, b2) <- duhas (DList []) l sk
+            (ss1, s2) <- parseStringUntil '\n' "" b2
+            (_, flag) <- checkCharRecursive ':' ss1
+            (s3, s4) <- parseStringUntil ':' "" ss1
+            if flag then
+                duhas (DMap ((a, d1) :d)) b2 sk
+            else
+                return (DMap ((a, d1):d), b2)
+        else do
+            (d3, s3) <- duhas (DMap []) l sk
+            duhas (DMap ((a, d3) :d)) s3 sk
         
-duhas (DList d) s sk = do
+duhas (DList d) str sk = do
+    (s, spaceCount) <- parseSpace 0 str
     (_, flag) <- checkChar '-' s
     if (not flag) then do
         return (DList d, s)
     else do
-        (_, spaceCount) <- parseSpace 0 s
-        if (spaceCount < sk) then
-            return (DList d, s)
-        else do
-            (_, s1) <- parseStringUntil ' ' "" s
-            (_, flagType) <- parseUntilPlural s1
-            if (flagType == True) then do
-                --Dlistas dliste
-                (d1, s1) <- duhas (DList []) s1 spaceCount
-                (d2, s2) <- duhas (DList (d1:d)) s1 sk
-                return $ (d2, s2)
-            else do         -- ateis arba DMapas, arba single reikšmė
-                (s1, s2) <- parseStringUntil '\n' "" s1
-                (s3, s4) <- parseStringUntil ':' "" s1
-                if (s4 == " ") then do
-                    duhas (DList ((convertSingleToDoc s3):d)) s2 sk
-                    -- reiškia s3 single reikšmė
-                else do
-                    (dmap, s) <- duhas (DMap []) (s1 ++ s2) sk     -- ateina DMap
+        (_, s1) <- parseStringUntil ' ' "" s
+        (_, flagType) <- parseUntilPlural s1
+        if (flagType == True) then do
+            --Dlistas dliste
+            (d1, s1) <- duhas (DList []) s1 (sk + 2)
+            (_, inte) <- parseSpace 0 s1
+            if (inte < sk) then
+                return (DList (d1:d), s1)
+            else
+                duhas (DList (d1:d)) s1 sk
+            
+        else do         -- ateis arba DMapas, arba single reikšmė
+            (ss1, s2) <- parseStringUntil '\n' "" s1
+            (_, flag) <- checkCharRecursive ':' ss1
+            (s3, s4) <- parseStringUntil ':' "" ss1
+            if (flag == False) then do
+                (_, spaceCount) <- parseSpace 0 s2
+                if (spaceCount < sk) then
+                    return (DList ((convertSingleToDoc s3):d), s2)
+                else
+                    duhas (DList ((convertSingleToDoc s3):d)) s2 spaceCount
+                -- reiškia s3 single reikšmė
+            else do
+                (dmap, s) <- duhas (DMap []) s1 (sk + 2)     -- ateina DMap
+                (_, spaceCount') <- parseSpace 0 s
+                if (spaceCount' < sk) then
+                    return (DList (dmap:d), s)
+                else
                     duhas (DList (dmap:d)) s sk
+
 duhas _ _ _ = Left "Blogai duhas"
     --return DString "a"
 
@@ -106,10 +118,16 @@ checkChar ch (x:xs) | ch == x = Right (xs, True)
                     | otherwise = Right (xs, False)
 checkChar _ "" = Right ("", False)
 
+checkCharRecursive :: Char -> String -> Either String (String, Bool)
+checkCharRecursive ch (x:xs) | ch == x = Right (xs, True)
+                    | otherwise = checkCharRecursive ch xs
+checkCharRecursive _ "" = Right ("", False)
+
 parseSpace :: Integer -> String -> Either String (String, Integer)
+parseSpace num "" = Right ("", num)
 parseSpace num (x:xs)   | ' ' == x = parseSpace (num + 1) xs
                         | otherwise = Right ((x:xs), num)
-parseSpace _ _ = Left "Blogai parse space"
+parseSpace x _ = Right ("", x)
                 
 -- IMPLEMENT
 -- Change right hand side as you wish
