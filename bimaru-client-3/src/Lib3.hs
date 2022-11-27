@@ -24,12 +24,13 @@ duhas d "" sk = do
     return (d, "") 
 duhas (DMap d) s sk = do
     (a, b) <- parseStringUntil ':' "" s         -- paimam a:b, a yra stringas, b document
+    (a, _) <- parseSpace 0 a
+    --when (a == "coords") $ Left $ show s
     (b1, flag) <- checkChar ' ' b
     if flag then do       -- single reiksme
         (k, l) <- parseStringUntil '\n' "" b1          -- k yra likęs tuplo vidus, l yra visi likę tuplai
         (d3, s3) <- duhas (DMap ((a, convertSingleToDoc k) :d)) l sk
         return (d3, s3)
-        --(k, l) <- parseStringUntil '\n' "" b               -- k yra likęs tuplo vidus, l yra visi likę tuplai
     else do         -- listas
         (l, flagType) <- parseUntilPlural b1
         if (flagType) then do       -- jei true, tai DListas
@@ -37,14 +38,22 @@ duhas (DMap d) s sk = do
             (ss1, s2) <- parseStringUntil '\n' "" b2
             (_, flag) <- checkCharRecursive ':' ss1
             (s3, s4) <- parseStringUntil ':' "" ss1
-            if flag then
-                duhas (DMap ((a, d1) :d)) b2 sk
+            if flag then do
+                (_, spaceCount) <- parseSpace 0 ss1
+                if (spaceCount < sk) then
+                    return (DMap ((a, d1):d), b2)
+                else 
+                    duhas (DMap ((a, d1) :d)) b2 sk
             else
                 return (DMap ((a, d1):d), b2)
         else do
-            (d3, s3) <- duhas (DMap []) l sk
-            duhas (DMap ((a, d3) :d)) s3 sk
-        
+            (_, spaceCount) <- parseSpace 0 b1
+            (d3, s3) <- duhas (DMap []) l (sk + 2)
+            if (spaceCount < sk) then
+                return (DMap ((a, d3) :d), s3)
+            else
+                duhas (DMap ((a, d3) :d)) s3 sk            
+
 duhas (DList d) str sk = do
     (s, spaceCount) <- parseSpace 0 str
     (_, flag) <- checkChar '-' s
@@ -140,11 +149,11 @@ data GameStart = GameStart [(String, Document)]
 -- Errors are not reported since GameStart is already totally valid adt
 -- containing all fields needed
 gameStart :: State -> GameStart -> State
+gameStart x y = error $ show x ++ "\n" ++ show y
 gameStart _ (GameStart []) = State []
 gameStart (State l) (GameStart d)
-    | State l == State [("Initial state",DNull)] = State $ ("Game", DList [DMap [("occupied_cells", DList [])], (DMap d)]) : l
+    | State l == State [("Initial state",DNull)] = error $ show $ State $ ("Game", DList [DMap [("occupied_cells", DList [])], (DMap d)]) : l
     | State l /= State [("Initial state",DNull)] = State []
-gameStart _ _ = State []
 
 
 -- IMPLEMENT
@@ -155,13 +164,13 @@ data Hint = Hint [(String, Document)]
 
 instance FromDocument Hint where
     fromDocument :: Document -> Either String Hint 
-    fromDocument x = Left $ (show x) ++ "1"
+    --fromDocument x = Left $ (show x) ++ "1"
     fromDocument (DMap x) = Right (Hint x)
     fromDocument _ = Left "No"
 
 instance FromDocument GameStart where
     fromDocument :: Document -> Either String GameStart
-    fromDocument x = Left $ (show x) ++ "2"
+    --fromDocument (DMap x) = Left $ (show (reverse x)) ++ "2"
     fromDocument (DMap x) = Right (GameStart x)
     fromDocument _ = Left "No"
 
