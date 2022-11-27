@@ -14,10 +14,15 @@ import Data.Char
 -- Parses a document from yaml
 parseDocument :: String -> Either String Document
 parseDocument str = do
-    (_, flag) <- checkChar '-' str
+    (str', flag) <- checkChar '-' str
     if flag then do
-        (doc, _) <- ultimateParser3000 (DList []) str 0
-        return doc
+        (_, flag) <- checkChar ' ' str'
+        if flag then do
+            (doc, _) <- ultimateParser3000 (DList []) str 0
+            return doc
+        else do
+            (a, _) <- parseStringUntil '\n' "" str
+            return (convertSingleToDoc a) 
     else do
         (a, _) <- parseStringUntil '\n' "" str
         (_, flag) <- checkCharRecursive ':' a
@@ -26,7 +31,7 @@ parseDocument str = do
             return doc
         else
             return (convertSingleToDoc a) 
-parseDocument _ = Left "Implement me"
+parseDocument _ = Left "Not S"
 
 ultimateParser3000 :: Document -> String -> Integer-> Either String (Document, String)
 ultimateParser3000 d "" sk = do
@@ -34,7 +39,6 @@ ultimateParser3000 d "" sk = do
 ultimateParser3000 (DMap d) s sk = do
     (a, b) <- parseStringUntil ':' "" s         -- paimam a:b, a yra stringas, b document
     (a, _) <- parseSpace 0 a
-    --when (a == "coords") $ Left $ show s
     (b1, flag) <- checkChar ' ' b
     if flag then do       -- single reiksme
         (k, l) <- parseStringUntil '\n' "" b1          -- k yra likęs tuplo vidus, l yra visi likę tuplai
@@ -99,17 +103,18 @@ ultimateParser3000 (DList d) str sk = do
                     return (DList (d ++ [dmap]), s)
                 else
                     ultimateParser3000 (DList (d ++ [dmap])) s sk
-
 ultimateParser3000 _ _ _ = Left "Blogai ultimateParser3000"
     --return DString "a"
 
 convertSingleToDoc :: String -> Document
 convertSingleToDoc s 
+    | s == "''" = DString ""
     | s == "''\n" = DString ""
     | s == "[]" = DList []
     | s == "{}" = DMap []
     | s == "" = DString ""
-    | s == "null" = DNull                                         -- nežinom kaip yamle žymimas null
+    | s == "null" = DNull                                   
+    | isNegNumber s = DInteger (read s)
     | isNumber' s = DInteger (read s)
     | not (isNumber' s) = DString s
     | otherwise = DString s
@@ -121,6 +126,11 @@ isNumber' (x:xs)
     | isDigit x && xs == "" =  True
     | otherwise = False
 
+
+isNegNumber :: String -> Bool
+isNegNumber (x:xs) 
+    | ((x == '-') && (isNumber' xs)) = True
+    | otherwise = False 
 
 parseStringUntil :: Char -> String -> String -> Either String (String, String)
 parseStringUntil ch s "" = Right (s, "")

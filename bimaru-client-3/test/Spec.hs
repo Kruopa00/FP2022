@@ -50,14 +50,23 @@ fromYamlTests = testGroup "Document from yaml"
         parseDocument " " @?= Right (DString " ")
     , testCase "integer" $
         parseDocument "0" @?= Right (DInteger 0)
+    , testCase "-integer" $
+        parseDocument "-1" @?= Right (DInteger (-1))    
     , testCase "string" $
         parseDocument "hello" @?= Right (DString "hello")
     , testCase "empty DList" $
         parseDocument "[]" @?= Right (DList [])
+    , testCase "empty DMap" $
+        parseDocument "{}" @?= Right (DMap [])
+    , testCase "" $
+        parseDocument "" @?= Right (DString "")
     , testCase "DList with all dlist items" $
         parseDocument  "- 9\n- null\n- veikia\n- - 36\n- Mapas: null"  @?= Right (DList [DInteger 9, DNull, DString "veikia", DList[DInteger 36],DMap[("Mapas", DNull)]])
-    , testCase "DMap with all dmap items" $
-        parseDocument "Null: null\nInteger: 8\nString: veikia\n- 2\n- 4" @?= Right (DMap [("Null", DNull),("Integer", DInteger 8),("String", DString "veikia"),("List", DList[DInteger 2, DInteger 4])])
+    , testCase "DList in Dlists" $
+        parseDocument "- - - 5\n    - 6\n  - 3\n  - 4\n- 1\n- 2" @?= Right (DList [DList [DList [DInteger 5, DInteger 6],DInteger 3, DInteger 4],DInteger 1, DInteger 2])
+    , testCase "Dmap in Dmaps" $
+        parseDocument "first:\n  third:\n  - 1\nsecond:\n  forth:\n  - 2" @?= Right (DMap[("first", DMap[("third", DList[DInteger 1])]),("second", DMap[("forth", DList[DInteger 2])])])
+
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
@@ -88,7 +97,8 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "dlist in dmap" $ 
         renderDocument (DMap[("first", DList[DMap[("second", DList [DInteger 1, DInteger 2])]])]) @?= dlistInDmap    
     , testCase "dlists in dlist" $
-        renderDocument (DList[DList[DList[DMap[("first", DList[DInteger 1, DString "test"])]]], DInteger 3, DNull]) @?= dlistsInList  
+        renderDocument (DList[DList[DList[DMap[("first", DList[DInteger 1, DString "test"])]]], DInteger 3, DNull]) @?= dlistsInList
+          
 
 
     -- IMPLEMENT more test cases:
