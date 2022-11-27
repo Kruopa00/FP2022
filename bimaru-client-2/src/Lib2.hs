@@ -93,7 +93,7 @@ gameStart _ _ = Left $ "Something went wrong while starting the game!"
 
 
 hint :: State -> Document -> Either String State
-
+hint x y = error $ show y
 hint _ (DMap[(_,DNull)]) = Left "Empty hints!"
 hint _ (DMap[(string,_)]) 
     | string /= "coords" = Left "Wrong DMap!"

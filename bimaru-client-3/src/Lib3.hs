@@ -24,35 +24,39 @@ duhas d "" sk = do
     return (d, "") 
 duhas (DMap d) s sk = do
     (a, b) <- parseStringUntil ':' "" s         -- paimam a:b, a yra stringas, b document
-    (a, _) <- parseSpace 0 a
-    --when (a == "coords") $ Left $ show s
-    (b1, flag) <- checkChar ' ' b
-    if flag then do       -- single reiksme
-        (k, l) <- parseStringUntil '\n' "" b1          -- k yra likęs tuplo vidus, l yra visi likę tuplai
-        (d3, s3) <- duhas (DMap ((a, convertSingleToDoc k) :d)) l sk
-        return (d3, s3)
-    else do         -- listas
-        (l, flagType) <- parseUntilPlural b1
-        if (flagType) then do       -- jei true, tai DListas
-            (d1, b2) <- duhas (DList []) l sk
-            (ss1, s2) <- parseStringUntil '\n' "" b2
-            (_, flag) <- checkCharRecursive ':' ss1
-            (s3, s4) <- parseStringUntil ':' "" ss1
-            if flag then do
-                (_, spaceCount) <- parseSpace 0 ss1
-                if (spaceCount < sk) then
-                    return (DMap ((a, d1):d), b2)
-                else 
-                    duhas (DMap ((a, d1) :d)) b2 sk
-            else
-                return (DMap ((a, d1):d), b2)
-        else do
-            (_, spaceCount) <- parseSpace 0 b1
-            (d3, s3) <- duhas (DMap []) l (sk + 2)
-            if (spaceCount < sk) then
-                return (DMap ((a, d3) :d), s3)
-            else
-                duhas (DMap ((a, d3) :d)) s3 sk            
+    (a, lolflag) <- parseSpace 0 a
+    if (lolflag < sk) then
+        return (DMap d, s) 
+    else do
+        --when (a == "coords") $ Left $ show s
+        (b1, flag) <- checkChar ' ' b
+        if flag then do       -- single reiksme
+            (k, l) <- parseStringUntil '\n' "" b1          -- k yra likęs tuplo vidus, l yra visi likę tuplai
+            duhas (DMap (d ++ [(a, convertSingleToDoc k)])) l sk
+        else do         -- listas
+            (l, flagType) <- parseUntilPlural b1
+            if (flagType) then do       -- jei true, tai DListas
+                (d1, b2) <- duhas (DList []) l sk
+                (ss1, s2) <- parseStringUntil '\n' "" b2
+                (_, flag) <- checkCharRecursive ':' ss1
+                (s3, s4) <- parseStringUntil ':' "" ss1
+                if flag then do
+                    (_, spaceCount) <- parseSpace 0 ss1
+                    if (spaceCount < sk) then
+                        return (DMap (d ++ [(a, d1)]), b2)
+                    else 
+                        duhas (DMap (d ++ [(a, d1)])) b2 sk
+                else
+                    return (DMap (d ++ [(a, d1)]), b2)
+            else do
+                (_, spaceCount) <- parseSpace 0 b1
+                --when (a == "tail") $ Left $ b1 ++ " " ++ a ++ show (spaceCount) ++ " " ++ show (sk)            
+                (d3, s3) <- duhas (DMap []) l spaceCount
+                if (spaceCount < sk) then do
+                    --Left $ show (spaceCount) ++ " " ++ show (sk)
+                    return (DMap (d ++ [(a, d3)]), s3)
+                else do
+                    duhas (DMap (d ++ [(a, d3)])) s3 sk            
 
 duhas (DList d) str sk = do
     (s, spaceCount) <- parseSpace 0 str
@@ -67,9 +71,9 @@ duhas (DList d) str sk = do
             (d1, s1) <- duhas (DList []) s1 (sk + 2)
             (_, inte) <- parseSpace 0 s1
             if (inte < sk) then
-                return (DList (d1:d), s1)
+                return (DList (d ++ [d1]), s1)
             else
-                duhas (DList (d1:d)) s1 sk
+                duhas (DList (d ++ [d1])) s1 sk
             
         else do         -- ateis arba DMapas, arba single reikšmė
             (ss1, s2) <- parseStringUntil '\n' "" s1
@@ -78,17 +82,17 @@ duhas (DList d) str sk = do
             if (flag == False) then do
                 (_, spaceCount) <- parseSpace 0 s2
                 if (spaceCount < sk) then
-                    return (DList ((convertSingleToDoc s3):d), s2)
+                    return (DList (d ++ [(convertSingleToDoc s3)]), s2)
                 else
-                    duhas (DList ((convertSingleToDoc s3):d)) s2 spaceCount
+                    duhas (DList (d ++ [(convertSingleToDoc s3)])) s2 spaceCount
                 -- reiškia s3 single reikšmė
             else do
                 (dmap, s) <- duhas (DMap []) s1 (sk + 2)     -- ateina DMap
                 (_, spaceCount') <- parseSpace 0 s
                 if (spaceCount' < sk) then
-                    return (DList (dmap:d), s)
+                    return (DList (d ++ [dmap]), s)
                 else
-                    duhas (DList (dmap:d)) s sk
+                    duhas (DList (d ++ [dmap])) s sk
 
 duhas _ _ _ = Left "Blogai duhas"
     --return DString "a"
@@ -149,10 +153,10 @@ data GameStart = GameStart [(String, Document)]
 -- Errors are not reported since GameStart is already totally valid adt
 -- containing all fields needed
 gameStart :: State -> GameStart -> State
-gameStart x y = error $ show x ++ "\n" ++ show y
+--gameStart x y = error $ show x ++ "\n" ++ show y
 gameStart _ (GameStart []) = State []
 gameStart (State l) (GameStart d)
-    | State l == State [("Initial state",DNull)] = error $ show $ State $ ("Game", DList [DMap [("occupied_cells", DList [])], (DMap d)]) : l
+    | State l == State [("Initial state",DNull)] = State $ ("Game", DList [DMap [("occupied_cells", DList [])], (DMap (("temp", DNull):d))]) : l
     | State l /= State [("Initial state",DNull)] = State []
 
 
@@ -164,7 +168,7 @@ data Hint = Hint [(String, Document)]
 
 instance FromDocument Hint where
     fromDocument :: Document -> Either String Hint 
-    --fromDocument x = Left $ (show x) ++ "1"
+    fromDocument x = Left $ (show x) ++ "1"
     fromDocument (DMap x) = Right (Hint x)
     fromDocument _ = Left "No"
 
@@ -178,14 +182,16 @@ instance FromDocument GameStart where
 -- Errors are not reported since GameStart is already totally valid adt
 -- containing all fields needed
 hint :: State -> Hint -> State
-
+--hint x y = error $ show x ++ show y
 hint _ (Hint[(_,DNull)]) = State []
 hint _ (Hint[(string,_)]) 
     | string /= "coords" = State []
 hint (State[]) _ = State []
+
 hint (State (l:ls)) (Hint t) = State (hintFunc1 l (DMap t) : ls)
 
 hintFunc1 :: (String, Document) -> Document -> (String, Document)
+hintFunc1 x y = error $ show x ++ show y
 hintFunc1 (l,ls) t = (l, hintFunc2 ls t)
 
 hintFunc2 :: Document -> Document -> Document

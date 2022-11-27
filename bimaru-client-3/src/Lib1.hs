@@ -36,7 +36,7 @@ gameStart (State l) d = State $ ("Game", DList [DMap [("occupied_cells", DList [
 -- IMPLEMENT
 -- renders your game board
 render :: State -> String
-render a = puttingCol (take 10 (getResult a []))  ++ puttingValues (map1 (updateMap gameMap [] (getToggles a [])) []) "" (drop 10 (getResult a []))
+render a = puttingCol (reverse (take 10 (getResult a [])))  ++ puttingValues (map1 (updateMap gameMap [] (getToggles a [])) []) "" (reverse (drop 10 (getResult a [])))
 
 
 -- IMPLEMENT
