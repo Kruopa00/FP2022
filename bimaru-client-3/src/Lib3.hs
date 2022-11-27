@@ -13,48 +13,58 @@ import Data.Char
 -- IMPLEMENT
 -- Parses a document from yaml
 parseDocument :: String -> Either String Document
---parseDocument x = Left $ show $ parseStringUntil ':' "" x
-parseDocument x = do
-    (d, s) <- duhas (DMap []) x 0
-    return d
+parseDocument str = do
+    (_, flag)<- checkChar '-' str
+    if flag then do
+        (doc, _) <- ultimateParser3000 (DList []) str 0
+        return doc
+    else do
+        (a, _) <- parseStringUntil '\n' "" str
+        (_, flag) <- checkCharRecursive ':' a
+        if flag then do
+            (doc, _) <- ultimateParser3000 (DMap []) str 0
+            return doc
+        else
+            return (convertSingleToDoc a) 
 parseDocument _ = Left "Implement me"
 
-duhas :: Document -> String -> Integer-> Either String (Document, String)
-duhas d "" sk = do
+ultimateParser3000 :: Document -> String -> Integer-> Either String (Document, String)
+ultimateParser3000 d "" sk = do
     return (d, "") 
-duhas (DMap d) s sk = do
+ultimateParser3000 (DMap d) s sk = do
     (a, b) <- parseStringUntil ':' "" s         -- paimam a:b, a yra stringas, b document
     (a, _) <- parseSpace 0 a
     --when (a == "coords") $ Left $ show s
     (b1, flag) <- checkChar ' ' b
     if flag then do       -- single reiksme
         (k, l) <- parseStringUntil '\n' "" b1          -- k yra likęs tuplo vidus, l yra visi likę tuplai
-        (d3, s3) <- duhas (DMap ((a, convertSingleToDoc k) :d)) l sk
-        return (d3, s3)
+        (_, spaceCount) <- parseSpace 0 l
+        if (spaceCount < sk) then
+            return (DMap (d ++ [(a, convertSingleToDoc k)]), l)
+        else
+            ultimateParser3000 (DMap (d ++ [(a, convertSingleToDoc k)])) l sk
     else do         -- listas
         (l, flagType) <- parseUntilPlural b1
         if (flagType) then do       -- jei true, tai DListas
-            (d1, b2) <- duhas (DList []) l sk
+            (d1, b2) <- ultimateParser3000 (DList []) l sk
             (ss1, s2) <- parseStringUntil '\n' "" b2
             (_, flag) <- checkCharRecursive ':' ss1
             (s3, s4) <- parseStringUntil ':' "" ss1
             if flag then do
                 (_, spaceCount) <- parseSpace 0 ss1
                 if (spaceCount < sk) then
-                    return (DMap ((a, d1):d), b2)
+                    return (DMap (d ++ [(a, d1)]), b2)
                 else 
-                    duhas (DMap ((a, d1) :d)) b2 sk
+                    ultimateParser3000 (DMap (d ++ [(a, d1)])) b2 sk
             else
-                return (DMap ((a, d1):d), b2)
+                return (DMap (d ++ [(a, d1)]), b2)
         else do
             (_, spaceCount) <- parseSpace 0 b1
-            (d3, s3) <- duhas (DMap []) l (sk + 2)
-            if (spaceCount < sk) then
-                return (DMap ((a, d3) :d), s3)
-            else
-                duhas (DMap ((a, d3) :d)) s3 sk            
+            (d3, s3) <- ultimateParser3000 (DMap []) l (sk + 2)
+            --Left $ show d3
+            ultimateParser3000 (DMap (d ++ [(a, d3)])) s3 sk            
 
-duhas (DList d) str sk = do
+ultimateParser3000 (DList d) str sk = do
     (s, spaceCount) <- parseSpace 0 str
     (_, flag) <- checkChar '-' s
     if (not flag) then do
@@ -64,12 +74,12 @@ duhas (DList d) str sk = do
         (_, flagType) <- parseUntilPlural s1
         if (flagType == True) then do
             --Dlistas dliste
-            (d1, s1) <- duhas (DList []) s1 (sk + 2)
+            (d1, s1) <- ultimateParser3000 (DList []) s1 (sk + 2)
             (_, inte) <- parseSpace 0 s1
             if (inte < sk) then
-                return (DList (d1:d), s1)
+                return (DList (d ++ [d1]), s1)
             else
-                duhas (DList (d1:d)) s1 sk
+                ultimateParser3000 (DList (d ++ [d1])) s1 sk
             
         else do         -- ateis arba DMapas, arba single reikšmė
             (ss1, s2) <- parseStringUntil '\n' "" s1
@@ -78,19 +88,19 @@ duhas (DList d) str sk = do
             if (flag == False) then do
                 (_, spaceCount) <- parseSpace 0 s2
                 if (spaceCount < sk) then
-                    return (DList ((convertSingleToDoc s3):d), s2)
+                    return (DList (d ++ [(convertSingleToDoc s3)]), s2)
                 else
-                    duhas (DList ((convertSingleToDoc s3):d)) s2 spaceCount
+                    ultimateParser3000 (DList (d ++ [(convertSingleToDoc s3)])) s2 spaceCount
                 -- reiškia s3 single reikšmė
             else do
-                (dmap, s) <- duhas (DMap []) s1 (sk + 2)     -- ateina DMap
+                (dmap, s) <- ultimateParser3000 (DMap []) s1 (sk + 2)     -- ateina DMap
                 (_, spaceCount') <- parseSpace 0 s
                 if (spaceCount' < sk) then
-                    return (DList (dmap:d), s)
+                    return (DList (d ++ [dmap]), s)
                 else
-                    duhas (DList (dmap:d)) s sk
+                    ultimateParser3000 (DList (d ++ [dmap])) s sk
 
-duhas _ _ _ = Left "Blogai duhas"
+ultimateParser3000 _ _ _ = Left "Blogai ultimateParser3000"
     --return DString "a"
 
 convertSingleToDoc :: String -> Document
@@ -149,10 +159,10 @@ data GameStart = GameStart [(String, Document)]
 -- Errors are not reported since GameStart is already totally valid adt
 -- containing all fields needed
 gameStart :: State -> GameStart -> State
-gameStart x y = error $ show x ++ "\n" ++ show y
+--gameStart x (GameStart y) = error $ (show x) ++ "\nLAB" ++ (show (("test", DNull):(reverse y)))
 gameStart _ (GameStart []) = State []
 gameStart (State l) (GameStart d)
-    | State l == State [("Initial state",DNull)] = error $ show $ State $ ("Game", DList [DMap [("occupied_cells", DList [])], (DMap d)]) : l
+    | State l == State [("Initial state",DNull)] = State $ ("Game", DList [DMap [("occupied_cells", DList [])], (DMap (("test", DNull):(reverse d)))]) : l
     | State l /= State [("Initial state",DNull)] = State []
 
 
