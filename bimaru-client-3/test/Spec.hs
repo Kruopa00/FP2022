@@ -40,8 +40,24 @@ fromYamlTests :: TestTree
 fromYamlTests = testGroup "Document from yaml"
   [   testCase "null" $
         parseDocument "null" @?= Right DNull
+    , testCase "empty DList" $
+        parseDocument "[]" @?= Right (DList [])
+    , testCase "empty DMap" $
+        parseDocument "{}" @?= Right (DMap [])
+    , testCase "empty DString" $
+        parseDocument "" @?= Right (DString "")
+    , testCase "DString one space" $
+        parseDocument " " @?= Right (DString " ")
     , testCase "integer" $
-        parseDocument "5" @?= Right (DInteger 5)
+        parseDocument "0" @?= Right (DInteger 0)
+    , testCase "string" $
+        parseDocument "hello" @?= Right (DString "hello")
+    , testCase "empty DList" $
+        parseDocument "[]" @?= Right (DList [])
+    , testCase "DList with all dlist items" $
+        parseDocument  "- 9\n- null\n- veikia\n- - 36\n- Mapas: null"  @?= Right (DList [DInteger 9, DNull, DString "veikia", DList[DInteger 36],DMap[("Mapas", DNull)]])
+    , testCase "DMap with all dmap items" $
+        parseDocument "Null: null\nInteger: 8\nString: veikia\n- 2\n- 4" @?= Right (DMap [("Null", DNull),("Integer", DInteger 8),("String", DString "veikia"),("List", DList[DInteger 2, DInteger 4])])
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types

@@ -14,7 +14,7 @@ import Data.Char
 -- Parses a document from yaml
 parseDocument :: String -> Either String Document
 parseDocument str = do
-    (_, flag)<- checkChar '-' str
+    (_, flag) <- checkChar '-' str
     if flag then do
         (doc, _) <- ultimateParser3000 (DList []) str 0
         return doc
@@ -30,7 +30,7 @@ parseDocument _ = Left "Implement me"
 
 ultimateParser3000 :: Document -> String -> Integer-> Either String (Document, String)
 ultimateParser3000 d "" sk = do
-    return (d, "") 
+    return (d, "")
 ultimateParser3000 (DMap d) s sk = do
     (a, b) <- parseStringUntil ':' "" s         -- paimam a:b, a yra stringas, b document
     (a, _) <- parseSpace 0 a
@@ -105,9 +105,14 @@ ultimateParser3000 _ _ _ = Left "Blogai ultimateParser3000"
 
 convertSingleToDoc :: String -> Document
 convertSingleToDoc s 
+    | s == "''\n" = DString ""
+    | s == "[]" = DList []
+    | s == "{}" = DMap []
+    | s == "" = DString ""
     | s == "null" = DNull                                         -- nežinom kaip yamle žymimas null
     | isNumber' s = DInteger (read s)
     | not (isNumber' s) = DString s
+    | otherwise = DString s
 
 isNumber' :: String -> Bool
 isNumber' "" = False
@@ -180,7 +185,7 @@ instance FromDocument Hint where
 
 instance FromDocument GameStart where
     fromDocument :: Document -> Either String GameStart
-    --fromDocument (DMap x) = Left $ (show (reverse x)) ++ "2"
+    --fromDocument x = Left (show x)
     fromDocument (DMap x) = Right (GameStart x)
     fromDocument _ = Left "No"
 
