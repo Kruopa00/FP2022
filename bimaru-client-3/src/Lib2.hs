@@ -72,9 +72,10 @@ renderMap :: Document -> Int -> String -> String
 renderMap (DList ((DList x):xs)) c string = renderMap (DList xs) c (renderList' (DList x) (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
 renderMap (DList (x:xs)) c string = renderMap (DList xs) c (renderList x (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
 renderMap (DMap ((x,DList xs):[])) c string =  (renderMap (DList xs) c (string ++ x ++ ": "))++"\n"
-renderMap (DMap ((x,DMap xs):xss)) c string = renderMap (DMap xss) c (renderMap (DMap xs) (c+1) (string ++  x ++ ": " ++ "\n" ++ (duplicate "  " (c+1))))
+renderMap (DMap ((x,DMap []):xss)) c string = renderMap (DMap xss) c (string ++  x ++ ": {}" ++ "\n")
+renderMap (DMap ((x,DMap xs):xss)) c string = renderMap (DMap xss) c (renderMap (DMap xs) (c+1) (string ++  x ++ ":" ++ "\n" ++ (duplicate "  " (c+1))))
 renderMap (DMap ((x,xs):[])) c string = renderMap xs c (string ++ x ++ ": ") -- jei paskutinis dmapo tuplas dedam tarpa
-renderMap (DMap ((x,xs):xss)) c string = renderMap (DMap xss) c (renderMap xs c (string ++ x ++ ": "))
+renderMap (DMap ((x,xs):xss)) c string = renderMap (DMap xss) c ((renderMap xs c (string ++ x ++ ": "))++"\n")
 renderMap (DInteger x) _ string = string ++ show x
 renderMap (DString x) _ string = string ++ x
 renderMap (DNull) _ string = string ++ "null"

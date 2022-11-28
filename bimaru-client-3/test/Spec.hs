@@ -60,7 +60,11 @@ fromYamlTests = testGroup "Document from yaml"
         parseDocument "{}" @?= Right (DMap [])
     , testCase "Dlist with -int" $
         parseDocument "- -1" @?= Right (DList [DInteger (-1)])
-    , testCase "" $
+    , testCase "number as string" $
+        parseDocument "'1'\n" @?= Right (DString "1")
+    , testCase "number as string in list" $
+        parseDocument "- '1'\n- labas\n- -3\n- '-2'" @?= Right (DList[DString "1", DString "labas", DInteger (-3), DString "-2"])
+    , testCase "empty" $
         parseDocument "" @?= Right (DString "")
     , testCase "DList with all dlist items" $
         parseDocument  "- 9\n- null\n- veikia\n- - 36\n- Mapas: null"  @?= Right (DList [DInteger 9, DNull, DString "veikia", DList[DInteger 36],DMap[("Mapas", DNull)]])
@@ -70,10 +74,12 @@ fromYamlTests = testGroup "Document from yaml"
         parseDocument "first:\n  third:\n  - 1\nsecond:\n  forth:\n  - 2" @?= Right (DMap[("first", DMap[("third", DList[DInteger 1])]),("second", DMap[("forth", DList[DInteger 2])])])
     , testCase "test" $
         parseDocument "- Z:\n  - 0\n  - []\n-  1" @?= Right (DList [DMap [("Z",DList [DInteger 0,DList []])],DString " 1"])
-    , testCase "test2" $
-        parseDocument "- {}\n- 2" @?= Right (DList[DMap [], DInteger 2])
     , testCase "test1" $
+        parseDocument "- {}\n- 2" @?= Right (DList[DMap [], DInteger 2])
+    , testCase "test2" $
         parseDocument "e8 " @?= Right (DString "e8 ")
+    , testCase "test3" $
+        parseDocument "e:\n- - 2\n- - yah: '2'\n  - 0\n- -1\nSS: {}\n" @?= Right (DMap [("SS",DMap []),("e",DList [DList [DInteger 2],DList [DMap [("yah",DString "2")],DInteger 0],DInteger (-1)])])
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
@@ -91,6 +97,8 @@ toYamlTests = testGroup "Document to yaml"
         renderDocument (DList [DInteger 5, DInteger 6]) @?= listOfInts
     , testCase "dmap" $
         renderDocument (DMap[("first", DInteger 5)]) @?= dMap
+    , testCase "empty dmap" $
+        renderDocument (DMap[("first", DMap [])]) @?= "---\nfirst: {}\n"
     , testCase "list of ints in a list" $
         renderDocument (DList [DList [DInteger 5, DInteger 6]]) @?= listInList
     , testCase "List of Lists" $
@@ -105,6 +113,9 @@ toYamlTests = testGroup "Document to yaml"
         renderDocument (DMap[("first", DList[DMap[("second", DList [DInteger 1, DInteger 2])]])]) @?= dlistInDmap    
     , testCase "dlists in dlist" $
         renderDocument (DList[DList[DList[DMap[("first", DList[DInteger 1, DString "test"])]]], DInteger 3, DNull]) @?= dlistsInList
+    , testCase "dlists in dlist" $
+        renderDocument (DMap [("MV",DString " m"),("eA",DList [DString "X"])]) @?= "---\nMV:  m\neA: \n- X\n" -- sitoks testas per friendly encoderi po ':' nededa tarpu, o pas mus po defaultu to yaml visada deda po dvitaskio tarpa!
+
           
 
 
