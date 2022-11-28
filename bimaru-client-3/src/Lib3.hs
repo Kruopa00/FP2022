@@ -9,6 +9,12 @@ import Data.Either (Either(Right, Left))
 import GHC.Base (error, when)
 import Data.Bool (Bool(True, False))
 import Data.Char
+import Data.String.Conversions
+import Data.Yaml as Y ( encodeWith, defaultEncodeOptions, defaultFormatOptions, setWidth, setFormat)
+
+
+friendlyEncode :: Document -> String
+friendlyEncode doc = cs (Y.encodeWith (setFormat (setWidth Nothing defaultFormatOptions) defaultEncodeOptions) doc)
 
 -- IMPLEMENT
 -- Parses a document from yaml
@@ -134,7 +140,8 @@ convertSingleToDoc s
     | s == "[]\n" = DList []
     | s == "{}\n" = DMap []
     | s == "" = DString ""
-    | s == "null" = DNull                                   
+    | s == "null" = DNull
+    | take 1 s == "'" = DString $ take ((Prelude.length (drop 1 s)) - 1) (drop 1 s)                                   
     | isNegNumber s = DInteger (read s)
     | isNumber' s = DInteger (read s)
     | not (isNumber' s) = DString s
