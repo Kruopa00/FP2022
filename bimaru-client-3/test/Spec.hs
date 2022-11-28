@@ -72,7 +72,7 @@ fromYamlTests = testGroup "Document from yaml"
         parseDocument "- - - 5\n    - 6\n  - 3\n  - 4\n- 1\n- 2" @?= Right (DList [DList [DList [DInteger 5, DInteger 6],DInteger 3, DInteger 4],DInteger 1, DInteger 2])
     , testCase "Dmap in Dmaps" $
         parseDocument "first:\n  third:\n  - 1\nsecond:\n  forth:\n  - 2" @?= Right (DMap[("first", DMap[("third", DList[DInteger 1])]),("second", DMap[("forth", DList[DInteger 2])])])
-    , testCase "test" $
+        , testCase "test" $
         parseDocument "- Z:\n  - 0\n  - []\n-  1" @?= Right (DList [DMap [("Z",DList [DInteger 0,DList []])],DString " 1"])
     , testCase "test1" $
         parseDocument "- {}\n- 2" @?= Right (DList[DMap [], DInteger 2])
@@ -80,7 +80,18 @@ fromYamlTests = testGroup "Document from yaml"
         parseDocument "e8 " @?= Right (DString "e8 ")
     , testCase "test3" $
         parseDocument "e:\n- - 2\n- - yah: '2'\n  - 0\n- -1\nSS: {}\n" @?= Right (DMap [("SS",DMap []),("e",DList [DList [DInteger 2],DList [DMap [("yah",DString "2")],DInteger 0],DInteger (-1)])])
-    -- IMPLEMENT more test cases:
+    , testCase "test4" $
+        parseDocument "- FqskDhayA: 1\n- ' '\n- - lAa: ' uJ1J1 F9'\n    Iev: []\n" @?= Right (DList [DMap [("FqskDhayA",DInteger 1)],DString " ",DList [DMap [("Iev",DList []),("lAa",DString " uJ1J1 F9")]]])
+    , testCase "test5" $
+        parseDocument "- -2\n- -4\n- ''\n- []\n" @?= Right (DList [DInteger (-2),DInteger (-4),DString "",DList []])
+    , testCase "test6" $
+        parseDocument "Kv: ' '\naZifp:\n- F8 9T\n- - -5\n  - ''\n- - 5\n  - -3\n" @?= Right (DMap [("Kv",DString " "),("aZifp",DList [DString "F8 9T",DList [DInteger (-5),DString ""],DList [DInteger 5,DInteger (-3)]])])
+    , testCase "test7" $
+        parseDocument "Z: ''\n'N':\n- -1\n- -1\neucu: []\n" @?= Right (DMap [("N",DList [DInteger (-1),DInteger (-1)]),("Z",DString ""),("eucu",DList [])])
+    , testCase "test8" $
+        parseDocument "- ' '\n- ' '\n" @?= Right (DList [DString " ",DString " "])
+    , testCase "test9" $
+        parseDocument "'N': '7'\n" @?= Right (DMap [("N",DString "7")])    -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
   ]
@@ -114,11 +125,10 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "dlists in dlist" $
         renderDocument (DList[DList[DList[DMap[("first", DList[DInteger 1, DString "test"])]]], DInteger 3, DNull]) @?= dlistsInList
     , testCase "dlists in dlist" $
-        renderDocument (DMap [("MV",DString " m"),("eA",DList [DString "X"])]) @?= "---\nMV:  m\neA: \n- X\n" -- sitoks testas per friendly encoderi po ':' nededa tarpu, o pas mus po defaultu to yaml visada deda po dvitaskio tarpa!
-
-          
-
-
+        renderDocument (DMap [("MV",DString " m"),("eA",DList [DString "X"])]) @?= "---\nMV:  m\neA:\n- X\n"
+    , testCase "test" $
+        renderDocument (DMap [("m",DList []),("u",DString "5I")]) @?= "---\nm: []\nu: 5I\n"
+    
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
@@ -130,7 +140,7 @@ listOfInts = unlines [
       "- 6"
   ]
 dMap :: String
-dMap = "---\nfirst: 5"
+dMap = "---\nfirst: 5\n"
 
 listInList :: String
 listInList = unlines[
@@ -141,7 +151,7 @@ listInList = unlines[
 listOfLists :: String
 listOfLists = unlines[
       "---"
-     ,"- first: "
+     ,"- first:"
      ,"  - 1"
      ,"  - 2"
      ,"- test"
@@ -161,25 +171,25 @@ listInListInList = unlines[
 dmapInDmap :: String
 dmapInDmap = unlines[
       "---",
-      "first: ",
-      "  third: ",
+      "first:",
+      "  third:",
       "  - 1",
-      "second: ",
-      "  forth: ",
+      "second:",
+      "  forth:",
       "  - 2"
   ]
 dlistInDmap :: String
 dlistInDmap = unlines[
       "---",
-      "first: ",
-      "- second: ",
+      "first:",
+      "- second:",
       "    - 1",
       "    - 2"
   ]
 dlistsInList :: String
 dlistsInList = unlines[
       "---",
-      "- - - first: ",
+      "- - - first:",
       "      - 1",
       "      - test",
       "- 3",
@@ -189,7 +199,7 @@ dlistsInList = unlines[
 checkTest :: String
 checkTest = unlines [
       "---",
-      "Coords: ",
+      "Coords:",
       "- col: 1",
       "  row: 2",
       "- col: 3",

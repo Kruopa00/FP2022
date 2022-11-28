@@ -54,29 +54,29 @@ ultimateParser3000 (DMap d) s sk = do
         (k, l) <- parseStringUntil '\n' "" b1          -- k yra likęs tuplo vidus, l yra visi likę tuplai
         (_, spaceCount) <- parseSpace 0 l
         if (spaceCount < sk) then
-            return (DMap (d ++ [(a, convertSingleToDoc k)]), l)
+            return (DMap (d ++ [(remove' a, convertSingleToDoc k)]), l)
         else
-            ultimateParser3000 (DMap (d ++ [(a, convertSingleToDoc k)])) l sk
+            ultimateParser3000 (DMap (d ++ [(remove' a, convertSingleToDoc k)])) l sk
     else do         -- listas
         (l, flagType) <- parseUntilPlural b1
         if (flagType) then do       -- jei true, tai DListas
-            (d1, b2) <- ultimateParser3000 (DList []) l sk
+            (d1, b2) <- ultimateParser3000 (DList []) l (sk)
             (ss1, s2) <- parseStringUntil '\n' "" b2
             (_, flag) <- checkCharRecursive ':' ss1
             (s3, s4) <- parseStringUntil ':' "" ss1
             if flag then do
                 (_, spaceCount) <- parseSpace 0 ss1
                 if (spaceCount < sk) then
-                    return (DMap (d ++ [(a, d1)]), b2)
+                    return (DMap (d ++ [(remove' a, d1)]), b2)
                 else 
-                    ultimateParser3000 (DMap (d ++ [(a, d1)])) b2 sk
+                    ultimateParser3000 (DMap (d ++ [(remove' a, d1)])) b2 sk
             else
                 return (DMap (d ++ [(a, d1)]), b2)
         else do
             (_, spaceCount) <- parseSpace 0 b1
             (d3, s3) <- ultimateParser3000 (DMap []) l (sk + 2)
             --Left $ show d3
-            ultimateParser3000 (DMap (d ++ [(a, d3)])) s3 sk            
+            ultimateParser3000 (DMap (d ++ [(remove' a, d3)])) s3 sk            
 
 ultimateParser3000 (DList d) str sk = do
     (s, spaceCount) <- parseSpace 0 str
@@ -110,9 +110,9 @@ ultimateParser3000 (DList d) str sk = do
                 (dmap, s) <- ultimateParser3000 (DMap []) s1 (sk + 2)     -- ateina DMap
                 (_, spaceCount') <- parseSpace 0 s
                 if (spaceCount' < sk) then
-                    return (DList (d ++ [dmap]), s)
+                    return (DList ((d ++ [dmap])), s)
                 else
-                    ultimateParser3000 (DList (d ++ [dmap])) s sk
+                    ultimateParser3000 (DList (d ++ [dmap])) s spaceCount'
 ultimateParser3000 _ _ _ = Left "Blogai ultimateParser3000"
     --return DString "a"
 
@@ -130,8 +130,16 @@ removeDashes x
     | otherwise = Right x
 removeDashes _ = Left "Blogai"
 
+remove' :: String -> String
+remove' (x:xs) = do
+    if x == '\'' then (take ((Prelude.length xs) - 1) xs)
+    else do
+        (x:xs)
+
 convertSingleToDoc :: String -> Document
 convertSingleToDoc s 
+    | s == "' '\n" = DString " "
+    | s == "' '" = DString " "
     | s == "''" = DString ""
     | s == "\n" = DString ""
     | s == "''\n" = DString ""
@@ -141,7 +149,7 @@ convertSingleToDoc s
     | s == "{}\n" = DMap []
     | s == "" = DString ""
     | s == "null" = DNull
-    | take 1 s == "'" = DString $ take ((Prelude.length (drop 1 s)) - 1) (drop 1 s)                                   
+    | take 1 s == "'" = (DString $ take ((Prelude.length (drop 1 s)) - 1) (drop 1 s))                              
     | isNegNumber s = DInteger (read s)
     | isNumber' s = DInteger (read s)
     | not (isNumber' s) = DString s
@@ -175,6 +183,7 @@ parseUntilPlural (x:xs)
             Right (x:xs, True)
     | isDigit x = Right (x:xs, False)
     | isLetter x = Right (x:xs, False)
+    | x=='\'' = Right (x:xs, False)
     | x=='[' = Right (x:xs, False)
     | x=='{' = Right (x:xs, False)
     | otherwise = parseUntilPlural xs

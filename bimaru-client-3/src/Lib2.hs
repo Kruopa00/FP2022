@@ -4,6 +4,7 @@ module Lib2(renderDocument, hint, gameStart, renderDocumentRecursive) where
 
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DString, DNull), Check(..), Coord(..) )
 import Lib1 (State(..))
+import Data.Char (isDigit)
 
 
 instance ToDocument Check where
@@ -42,7 +43,13 @@ renderDocumentRecursive (DInteger x) _ string = do
     string ++ show x
 
 renderDocumentRecursive (DString x) _ string = do
-    string ++ x
+    if x=="" then 
+        string ++ "''"
+    else do
+        if (isNumber' x) then do
+            string ++ "'" ++ x ++ "'"
+        else do
+            string ++ x
 
 renderDocumentRecursive (DNull) _ string = do
     string ++ "null"
@@ -50,16 +57,35 @@ renderDocumentRecursive (DNull) _ string = do
 
 
 renderList :: Document -> Int -> String -> String
+renderList (DList ((DMap []):xs)) c string = renderList (DList xs) c (string ++ "- {}\n")
+renderList (DList ((DList []):xs)) c string = renderList (DList xs) c (string ++ "- [3]\n")
 renderList (DList ((DList x):xs)) c string = renderList (DList xs) c (renderList' (DList x) (c+1) (string ++ "- "))
 renderList (DList (x:[])) c string = renderList x (c) (string ++ (duplicate "  " c) ++ "- ") ++ "\n" -- pridejom \n 
 renderList (DList (x:xs)) c string = renderList (DList xs) c (renderList x c (string ++ (duplicate "  " c) ++ "- ")++ "\n" )
+renderList (DMap ((x,DMap xs):[])) c string =  renderMap (DMap xs) (c+1) (string ++  x ++ ":")
+renderList (DMap ((x,DList xs):[])) c string =  renderMap (DList xs) (c+1) (string ++  x ++ ":")
 renderList (DMap ((x,xs):[])) c string =  renderMap xs (c+1) (string ++  x ++ ": ") -- pridejom c+1, \n
+renderList (DMap ((x,DMap xs):xss)) c string = renderList (DMap xss) c (renderMap (DMap xs) c (string ++  x ++ ":") ++ "\n" ++ (duplicate "  " c))
+renderList (DMap ((x,DList xs):xss)) c string = renderList (DMap xss) c (renderMap (DList xs) c (string ++  x ++ ":") ++ "\n" ++ (duplicate "  " c))
 renderList (DMap ((x,xs):xss)) c string = renderList (DMap xss) c (renderMap xs c (string ++  x ++ ": ") ++ "\n" ++ (duplicate "  " c))
 renderList (DInteger x) _ string = string ++ show x
-renderList (DString x) _ string = string ++ x
+renderList (DString x) _ string = do
+    if x=="" then 
+        string ++ "''"
+    else do
+        if (isNumber' x) then do
+            string ++ "'" ++ x ++ "'"
+        else do
+            string ++ x
 renderList (DNull) _ string = string ++ "null"
 renderList _ _ string = string
 
+isNumber' :: String -> Bool
+isNumber' "" = False
+isNumber' (x:xs)
+    | isDigit x && xs /= "" = isNumber' xs
+    | isDigit x && xs == "" =  True
+    | otherwise = False
 
 renderList' :: Document -> Int -> String -> String
 renderList' (DList ((DList x):xs)) c string = renderList (DList xs) c (renderList' (DList x) (c+1) (string ++ "- "))
@@ -71,13 +97,24 @@ renderList' _ _ string = string
 renderMap :: Document -> Int -> String -> String
 renderMap (DList ((DList x):xs)) c string = renderMap (DList xs) c (renderList' (DList x) (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
 renderMap (DList (x:xs)) c string = renderMap (DList xs) c (renderList x (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
-renderMap (DMap ((x,DList xs):[])) c string =  (renderMap (DList xs) c (string ++ x ++ ": "))++"\n"
+renderMap (DMap ((x,DList []):[])) c string =  (((string ++ x ++ ": []"))++"\n")
+renderMap (DMap ((x,DList []):xss)) c string =  renderMap (DMap xss) c ((string ++ x ++ ": []")++"\n")
+renderMap (DMap ((x,DList xs):[])) c string =  (renderMap (DList xs) c (string ++ x ++ ":"))++"\n"
+renderMap (DMap ((x,DList xs):xss)) c string =  renderMap (DMap xss) c ((renderMap (DList xs) c (string ++ x ++ ":"))++"\n")
 renderMap (DMap ((x,DMap []):xss)) c string = renderMap (DMap xss) c (string ++  x ++ ": {}" ++ "\n")
 renderMap (DMap ((x,DMap xs):xss)) c string = renderMap (DMap xss) c (renderMap (DMap xs) (c+1) (string ++  x ++ ":" ++ "\n" ++ (duplicate "  " (c+1))))
-renderMap (DMap ((x,xs):[])) c string = renderMap xs c (string ++ x ++ ": ") -- jei paskutinis dmapo tuplas dedam tarpa
+renderMap (DMap ((x,xs):[])) c string = ((renderMap xs c (string ++ x ++ ": ")) ++ "\n") -- jei paskutinis dmapo tuplas dedam tarpa
 renderMap (DMap ((x,xs):xss)) c string = renderMap (DMap xss) c ((renderMap xs c (string ++ x ++ ": "))++"\n")
 renderMap (DInteger x) _ string = string ++ show x
-renderMap (DString x) _ string = string ++ x
+renderMap (DString "") _ string = string ++ "''"
+renderMap (DString x) _ string = do
+    if x=="" then 
+        string ++ "''"
+    else do
+        if (isNumber' x) then do
+            string ++ "'" ++ x ++ "'"
+        else do
+            string ++ x
 renderMap (DNull) _ string = string ++ "null"
 renderMap _ _ string = string
 
