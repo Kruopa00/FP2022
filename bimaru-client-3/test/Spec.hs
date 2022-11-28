@@ -58,6 +58,8 @@ fromYamlTests = testGroup "Document from yaml"
         parseDocument "[]" @?= Right (DList [])
     , testCase "empty DMap" $
         parseDocument "{}" @?= Right (DMap [])
+    , testCase "Dlist with -int" $
+        parseDocument "- -1" @?= Right (DList [DInteger (-1)])
     , testCase "" $
         parseDocument "" @?= Right (DString "")
     , testCase "DList with all dlist items" $
@@ -68,6 +70,10 @@ fromYamlTests = testGroup "Document from yaml"
         parseDocument "first:\n  third:\n  - 1\nsecond:\n  forth:\n  - 2" @?= Right (DMap[("first", DMap[("third", DList[DInteger 1])]),("second", DMap[("forth", DList[DInteger 2])])])
     , testCase "test" $
         parseDocument "- Z:\n  - 0\n  - []\n-  1" @?= Right (DList [DMap [("Z",DList [DInteger 0,DList []])],DString " 1"])
+    , testCase "test2" $
+        parseDocument "- {}\n- 2" @?= Right (DList[DMap [], DInteger 2])
+    , testCase "test1" $
+        parseDocument "e8 " @?= Right (DString "e8 ")
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types

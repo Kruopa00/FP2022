@@ -14,7 +14,7 @@ import Data.Char
 -- Parses a document from yaml
 parseDocument :: String -> Either String Document
 parseDocument str = do
-    str <- removeDashes str
+    str <- removeDashes str -- removes ---\n from the front if any
     (str', flag) <- checkChar '-' str
     if flag then do
         (_, flag) <- checkChar ' ' str'
@@ -25,13 +25,16 @@ parseDocument str = do
             (a, _) <- parseStringUntil '\n' "" str
             return (convertSingleToDoc a) 
     else do
-        (a, _) <- parseStringUntil '\n' "" str
-        (_, flag) <- checkCharRecursive ':' a
-        if flag then do
-            (doc, _) <- ultimateParser3000 (DMap []) str 0
-            return doc
-        else
-            return (convertSingleToDoc a) 
+        if (str == " ") then do
+            (return (DString " "))
+        else do 
+            (a, _) <- parseStringUntil '\n' "" str
+            (_, flag) <- checkCharRecursive ':' a
+            if flag then do
+                (doc, _) <- ultimateParser3000 (DMap []) str 0
+                return doc
+            else
+                return (convertSingleToDoc a) 
 parseDocument _ = Left "Not S"
 
 ultimateParser3000 :: Document -> String -> Integer-> Either String (Document, String)
@@ -113,6 +116,7 @@ removeFour (x:xs) n = do
         x:xs
     else do
         removeFour xs (n + 1)
+removeFour x n = x
 
 removeDashes :: String -> Either String String
 removeDashes x 
@@ -157,9 +161,15 @@ parseStringUntil ch _ _ = Left "Empty"
 
 parseUntilPlural :: String -> Either String (String, Bool)                -- jei Dlistas true, jei dmapas false
 parseUntilPlural (x:xs) 
-    | x == '-' = Right (x:xs, True)
+    | x == '-' = do
+        if (take 1 xs /= " ") then
+            return (x:xs, False)
+        else
+            Right (x:xs, True)
     | isDigit x = Right (x:xs, False)
     | isLetter x = Right (x:xs, False)
+    | x=='[' = Right (x:xs, False)
+    | x=='{' = Right (x:xs, False)
     | otherwise = parseUntilPlural xs
 parseUntilPlural "" = Right ("", False)
 parseUntilPlural _ = Left "blogai"

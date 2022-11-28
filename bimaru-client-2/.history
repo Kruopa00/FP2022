@@ -1,3 +1,7 @@
+hint 1
+hint 2
+hint 1
+hint 1
 check
 toggle 2 3
 toggle 1 2
@@ -94,7 +98,3 @@ toggle 2 3
 toggle 1 2
 check
 toggle 3 4
-toggle 2 3
-toggle 1 2
-check
-toggle 4 5
