@@ -26,6 +26,12 @@ renderDocument x = "---\n" ++ renderDocumentRecursive x 0 ""
 
 renderDocumentRecursive :: Document -> Int -> String -> String
 
+renderDocumentRecursive (DList []) _ string = do
+    string ++ "[]"
+
+renderDocumentRecursive (DMap []) _ string = do
+    string ++ "{}"
+
 renderDocumentRecursive (DMap x) c string = do
     renderMap (DMap x) c string
 

@@ -14,6 +14,7 @@ import Data.Char
 -- Parses a document from yaml
 parseDocument :: String -> Either String Document
 parseDocument str = do
+    str <- removeDashes str
     (str', flag) <- checkChar '-' str
     if flag then do
         (_, flag) <- checkChar ' ' str'
@@ -106,12 +107,28 @@ ultimateParser3000 (DList d) str sk = do
 ultimateParser3000 _ _ _ = Left "Blogai ultimateParser3000"
     --return DString "a"
 
+removeFour :: String -> Integer -> String
+removeFour (x:xs) n = do
+    if (n > 3) then do
+        x:xs
+    else do
+        removeFour xs (n + 1)
+
+removeDashes :: String -> Either String String
+removeDashes x 
+    | take 4 x == "---\n" = Right $ removeFour x 0
+    | otherwise = Right x
+removeDashes _ = Left "Blogai"
+
 convertSingleToDoc :: String -> Document
 convertSingleToDoc s 
     | s == "''" = DString ""
+    | s == "\n" = DString ""
     | s == "''\n" = DString ""
     | s == "[]" = DList []
     | s == "{}" = DMap []
+    | s == "[]\n" = DList []
+    | s == "{}\n" = DMap []
     | s == "" = DString ""
     | s == "null" = DNull                                   
     | isNegNumber s = DInteger (read s)
