@@ -20,101 +20,117 @@ friendlyEncode doc = cs (Y.encodeWith (setFormat (setWidth Nothing defaultFormat
 -- Parses a document from yaml
 parseDocument :: String -> Either String Document
 parseDocument str = do
-    str <- removeDashes str -- removes ---\n from the front if any
+    str <- removeDashes str     -- removes ---\n from the front if any
     (str', flag) <- checkChar '-' str
-    if flag then do
+    if flag then do     -- DList or negative 
         (_, flag) <- checkChar ' ' str'
-        if flag then do
+        if flag then do     -- DList
             (doc, _) <- ultimateParser3000 (DList []) str 0
             return doc
-        else do
+        else do     -- negative single
             (a, _) <- parseStringUntil '\n' "" str
-            return (convertSingleToDoc a) 
-    else do
+            return (convertSingleToDoc a)
+    else do     -- DMap or single
         if (str == " ") then do
             (return (DString " "))
-        else do 
+        else do
             (a, _) <- parseStringUntil '\n' "" str
             (_, flag) <- checkCharRecursive ':' a
-            if flag then do
+            if flag then do     -- DMap
                 (doc, _) <- ultimateParser3000 (DMap []) str 0
                 return doc
-            else
-                return (convertSingleToDoc a) 
+            else        -- single
+                return (convertSingleToDoc a)
 parseDocument _ = Left "Not S"
 
 ultimateParser3000 :: Document -> String -> Integer-> Either String (Document, String)
 ultimateParser3000 d "" sk = do
     return (d, "")
 ultimateParser3000 (DMap d) s sk = do
-    (a, b) <- parseStringUntil ':' "" s         -- paimam a:b, a yra stringas, b document
-    (a, _) <- parseSpace 0 a
-    (b1, flag) <- checkChar ' ' b
-    if flag then do       -- single reiksme
-        (k, l) <- parseStringUntil '\n' "" b1          -- k yra likęs tuplo vidus, l yra visi likę tuplai
-        (_, spaceCount) <- parseSpace 0 l
-        if (spaceCount < sk) then
-            return (DMap (d ++ [(remove' a, convertSingleToDoc k)]), l)
-        else
-            ultimateParser3000 (DMap (d ++ [(remove' a, convertSingleToDoc k)])) l sk
-    else do         -- listas
-        (l, flagType) <- parseUntilPlural b1
-        if (flagType) then do       -- jei true, tai DListas
-            (d1, b2) <- ultimateParser3000 (DList []) l (sk)
-            (ss1, s2) <- parseStringUntil '\n' "" b2
-            (_, flag) <- checkCharRecursive ':' ss1
-            (s3, s4) <- parseStringUntil ':' "" ss1
-            if flag then do
-                (_, spaceCount) <- parseSpace 0 ss1
-                if (spaceCount < sk) then
-                    return (DMap (d ++ [(remove' a, d1)]), b2)
-                else 
-                    ultimateParser3000 (DMap (d ++ [(remove' a, d1)])) b2 sk
+    (ss1, s2) <- parseStringUntil '\n' "" s
+    (_, flag) <- checkCharRecursive ':' ss1
+    if flag then do
+        (a, b) <- parseStringUntil ':' "" s     -- paimam a:b, a yra stringas, b document
+        (a, _) <- parseSpace 0 a
+        (b1, flag) <- checkChar ' ' b
+        if flag then do     -- single
+            (k, l) <- parseStringUntil '\n' "" b1       -- k yra likęs tuplo vidus, l yra visi likę tuplai
+            (_, spaceCount) <- parseSpace 0 l
+            if (spaceCount < sk) then
+                return (DMap (d ++ [(remove' a, convertSingleToDoc k)]), l)
             else
-                return (DMap (d ++ [(a, d1)]), b2)
-        else do
-            (_, spaceCount) <- parseSpace 0 b1
-            (d3, s3) <- ultimateParser3000 (DMap []) l (sk + 2)
-            --Left $ show d3
-            ultimateParser3000 (DMap (d ++ [(remove' a, d3)])) s3 sk            
-
+                ultimateParser3000 (DMap (d ++ [(remove' a, convertSingleToDoc k)])) l sk
+        else do     -- listas
+            (l, flagType) <- parseUntilPlural b1
+            if (flagType) then do   -- jei true, tai DListas
+                (d1, b2) <- ultimateParser3000 (DList []) l (sk)
+                (ss1, s2) <- parseStringUntil '\n' "" b2
+                (_, flag) <- checkCharRecursive ':' ss1
+                (s3, s4) <- parseStringUntil ':' "" ss1
+                if flag then do
+                    (_, spaceCount) <- parseSpace 0 ss1
+                    if (spaceCount < sk) then
+                        return (DMap (d ++ [((remove' a), d1)]), b2)
+                    else
+                        ultimateParser3000 (DMap (d ++ [(remove' a, d1)])) b2 sk
+                else do
+                    (_, spaceCount) <- parseSpace 0 ss1
+                    if (spaceCount < sk) then do
+                        return (DMap (d ++ [(a, d1)]), b2)
+                    else
+                        ultimateParser3000 (DMap (d ++ [(a, d1)])) b2 sk                
+            else do     -- DMap
+                (d3, s3) <- ultimateParser3000 (DMap []) l (sk + 2)
+                (_, spaceCount) <- parseSpace 0 s3
+                if (spaceCount < sk) then
+                    return (DMap (d ++ [(remove' a, d3)]), s3)
+                else
+                    ultimateParser3000 (DMap (d ++ [(remove' a, d3)])) s3 sk
+    else
+        return (DMap d, s)
 ultimateParser3000 (DList d) str sk = do
     (s, spaceCount) <- parseSpace 0 str
     (_, flag) <- checkChar '-' s
     if (not flag) then do
-        return (DList d, s)
+        return (DList d, str)
     else do
         (_, s1) <- parseStringUntil ' ' "" s
         (_, flagType) <- parseUntilPlural s1
-        if (flagType == True) then do
-            --Dlistas dliste
+        if (flagType == True) then do       --Dlistas dliste
             (d1, s1) <- ultimateParser3000 (DList []) s1 (sk + 2)
             (_, inte) <- parseSpace 0 s1
             if (inte < sk) then
                 return (DList (d ++ [d1]), s1)
             else
                 ultimateParser3000 (DList (d ++ [d1])) s1 sk
-            
         else do         -- ateis arba DMapas, arba single reikšmė
             (ss1, s2) <- parseStringUntil '\n' "" s1
             (_, flag) <- checkCharRecursive ':' ss1
             (s3, s4) <- parseStringUntil ':' "" ss1
-            if (flag == False) then do
+            if (flag == False) then do      -- single
                 (_, spaceCount) <- parseSpace 0 s2
+                (ss1, _) <- parseStringUntil '\n' "" s2
+                (_, flag) <- checkCharRecursive ':' ss1
+                (_, flagType) <- parseUntilPlural ss1
                 if (spaceCount < sk) then
-                    return (DList (d ++ [(convertSingleToDoc s3)]), s2)
+                    return (DList (d ++ [(convertSingleToDoc s3)]), s2)                
+                else if(spaceCount <= sk && flag && (flagType == False)) then
+                    return (DList (d ++ [(convertSingleToDoc s3)]), s2) 
                 else
                     ultimateParser3000 (DList (d ++ [(convertSingleToDoc s3)])) s2 spaceCount
-                -- reiškia s3 single reikšmė
-            else do
-                (dmap, s) <- ultimateParser3000 (DMap []) s1 (sk + 2)     -- ateina DMap
-                (_, spaceCount') <- parseSpace 0 s
-                if (spaceCount' < sk) then
+            else do     -- DMap
+                (dmap, s) <- ultimateParser3000 (DMap []) s1 (sk + 2)
+                (s2, spaceCount') <- parseSpace 0 s
+                (_, flag) <- checkChar '-' s2
+                if flag then do
+                    if (spaceCount' < sk) then
+                        return (DList ((d ++ [dmap])), s)
+                    else
+                        ultimateParser3000 (DList (d ++ [dmap])) s spaceCount'
+                else do
                     return (DList ((d ++ [dmap])), s)
-                else
-                    ultimateParser3000 (DList (d ++ [dmap])) s spaceCount'
+
 ultimateParser3000 _ _ _ = Left "Blogai ultimateParser3000"
-    --return DString "a"
 
 removeFour :: String -> Integer -> String
 removeFour (x:xs) n = do
@@ -125,7 +141,7 @@ removeFour (x:xs) n = do
 removeFour x n = x
 
 removeDashes :: String -> Either String String
-removeDashes x 
+removeDashes x
     | take 4 x == "---\n" = Right $ removeFour x 0
     | otherwise = Right x
 removeDashes _ = Left "Blogai"
@@ -137,7 +153,7 @@ remove' (x:xs) = do
         (x:xs)
 
 convertSingleToDoc :: String -> Document
-convertSingleToDoc s 
+convertSingleToDoc s
     | s == "' '\n" = DString " "
     | s == "' '" = DString " "
     | s == "''" = DString ""
@@ -149,7 +165,7 @@ convertSingleToDoc s
     | s == "{}\n" = DMap []
     | s == "" = DString ""
     | s == "null" = DNull
-    | take 1 s == "'" = (DString $ take ((Prelude.length (drop 1 s)) - 1) (drop 1 s))                              
+    | take 1 s == "'" = (DString $ take ((Prelude.length (drop 1 s)) - 1) (drop 1 s))
     | isNegNumber s = DInteger (read s)
     | isNumber' s = DInteger (read s)
     | not (isNumber' s) = DString s
@@ -164,9 +180,9 @@ isNumber' (x:xs)
 
 
 isNegNumber :: String -> Bool
-isNegNumber (x:xs) 
+isNegNumber (x:xs)
     | ((x == '-') && (isNumber' xs)) = True
-    | otherwise = False 
+    | otherwise = False
 
 parseStringUntil :: Char -> String -> String -> Either String (String, String)
 parseStringUntil ch s "" = Right (s, "")
@@ -175,7 +191,7 @@ parseStringUntil ch s (x:xs) | ch == x = Right (s, xs)
 parseStringUntil ch _ _ = Left "Empty"
 
 parseUntilPlural :: String -> Either String (String, Bool)                -- jei Dlistas true, jei dmapas false
-parseUntilPlural (x:xs) 
+parseUntilPlural (x:xs)
     | x == '-' = do
         if (take 1 xs /= " ") then
             return (x:xs, False)
@@ -205,12 +221,12 @@ parseSpace num "" = Right ("", num)
 parseSpace num (x:xs)   | ' ' == x = parseSpace (num + 1) xs
                         | otherwise = Right ((x:xs), num)
 parseSpace x _ = Right ("", x)
-                
+
 -- IMPLEMENT
 -- Change right hand side as you wish
 -- You will have to create an instance of FromDocument
 
-data GameStart = GameStart [(String, Document)] 
+data GameStart = GameStart [(String, Document)]
     deriving (Show, Eq)
 
 -- This adds game data to initial state
@@ -227,11 +243,11 @@ gameStart (State l) (GameStart d)
 -- IMPLEMENT
 -- Change right hand side as you wish
 -- You will have to create an instance of FromDocument
-data Hint = Hint [(String, Document)] 
+data Hint = Hint [(String, Document)]
     deriving (Show, Eq)
 
 instance FromDocument Hint where
-    fromDocument :: Document -> Either String Hint 
+    fromDocument :: Document -> Either String Hint
     --fromDocument x = Left $ (show x) ++ "1"
     fromDocument (DMap x) = Right (Hint x)
     fromDocument _ = Left "No"
@@ -248,7 +264,7 @@ instance FromDocument GameStart where
 hint :: State -> Hint -> State
 
 hint _ (Hint[(_,DNull)]) = State []
-hint _ (Hint[(string,_)]) 
+hint _ (Hint[(string,_)])
     | string /= "coords" = State []
 hint (State[]) _ = State []
 hint (State (l:ls)) (Hint t) = State (hintFunc1 l (DMap t) : ls)
@@ -288,4 +304,6 @@ hintFunc9 _ = DMap []
 
 hintFunc10 :: (String, Document) -> Document
 hintFunc10 (_,ls) = ls
+
+
 

@@ -91,7 +91,16 @@ fromYamlTests = testGroup "Document from yaml"
     , testCase "test8" $
         parseDocument "- ' '\n- ' '\n" @?= Right (DList [DString " ",DString " "])
     , testCase "test9" $
-        parseDocument "'N': '7'\n" @?= Right (DMap [("N",DString "7")])    -- IMPLEMENT more test cases:
+        parseDocument "'N': '7'\n" @?= Right (DMap [("N",DString "7")])    
+    , testCase "test10" $
+        parseDocument "z:\n  hW:\n  - 0\n  - - Cz: -1\n      JR: []\n      r: '27'\n  - 0\n  DEe: 3B\n" @?= Right (DMap [("z",DMap [("DEe",DString "3B"),("hW",DList [DInteger 0,DList [DMap [("Cz",DInteger (-1)),("JR",DList []),("r",DString "27")]],DInteger 0])])])
+    , testCase "test11" $
+        parseDocument "- - - -3\n    - 3\n  - JG: 0\n    qY:\n    - ' p'\n    - R:\n        B: H\n        JU:\n        - 0\n        - '64'\n        - []\n  - {}\n- -3\n" @?= Right (DList [DList [DList [DInteger (-3),DInteger 3],DMap [("JG",DInteger 0),("qY",DList [DString " p",DMap [("R",DMap [("B",DString "H"),("JU",DList [DInteger 0,DString "64",DList []])])]])],DMap []],DInteger (-3)])
+    , testCase "test12" $
+        parseDocument "- qi:\n  - VcAC: ''\n  xl: 2\n" @?= Right (DList [DMap [("qi",DList [DMap [("VcAC",DString "")]]),("xl",DInteger 2)]])
+    , testCase "test13" $
+        parseDocument "QLs:\n  A:\n  - 'm  '\n  - -1\n  - l: []\n    o: -1\n    ap:\n      DWf: -3\n      'Y': []\nBM: []\ni: j0L\n" @?= Right (DMap [("BM",DList []),("QLs",DMap [("A",DList [DString "m  ",DInteger (-1),DMap [("ap",DMap [("DWf",DInteger (-3)),("Y",DList [])]),("l",DList []),("o",DInteger (-1))]])]),("i",DString "j0L")])
+    -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
   ]
