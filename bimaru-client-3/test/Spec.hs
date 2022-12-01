@@ -134,13 +134,23 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "dlists in dlist" $
         renderDocument (DList[DList[DList[DMap[("first", DList[DInteger 1, DString "test"])]]], DInteger 3, DNull]) @?= dlistsInList
     , testCase "dlists in dlist" $
-        renderDocument (DMap [("MV",DString " m"),("eA",DList [DString "X"])]) @?= "---\nMV:  m\neA:\n- X\n"
+        renderDocument (DMap [("MV",DString " m"),("eA",DList [DString "X"])]) @?= "---\nMV: ' m'\neA:\n- X\n"
     , testCase "test" $
         renderDocument (DMap [("m",DList []),("u",DString "5I")]) @?= "---\nm: []\nu: 5I\n"
-    
+    , testCase "test1" $
+        renderDocument (DList [DMap [("AuiG",DInteger 5),("bpqXke",DInteger 6),("rQLrCPqAiD",DList [DInteger (-10)])],DList [DMap [("VXe",DString " 0ke")]]]) @?= "---\n- AuiG: 5\n  rQLrCPqAiD:\n  - -10\n  bpqXke: 6\n- - VXe: ' 0ke'\n  - 8\n- 2\n"
+    , testCase "test2" $
+        renderDocument (DMap [("Z",DMap [("BI",DInteger 2),("BS",DInteger (-1))]),("f",DInteger (-2))]) @?= "---\nZ:\n  BI: 2\n  BS: -1\nf: -2\n"
+    , testCase "test3" $
+        renderDocument (DList [DInteger (-3),DInteger (-1),DMap [("n",DMap []),("UFR",DString "R "),("bvg",DInteger (-1))]]) @?= "---\n- -3\n- -1\n- 'n': {}\n  UFR: 'R '\n  bvg: -1\n"
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
+
+
+-- KODEL PARSERIS NORI KAD RAKTAS BUTU KABUTESE JEIGU JIS N???????????!!!!!!!!
+
+
   ]
 listOfInts :: String
 listOfInts = unlines [
