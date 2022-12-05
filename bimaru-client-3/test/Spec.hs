@@ -19,6 +19,9 @@ main = defaultMain (testGroup "Tests" [
 properties :: TestTree
 properties = testGroup "Properties" [golden, dogfood]
 
+
+
+
 friendlyEncode :: Document -> String
 friendlyEncode doc = cs (Y.encodeWith (setFormat (setWidth Nothing defaultFormatOptions) defaultEncodeOptions) doc)
 
@@ -100,6 +103,15 @@ fromYamlTests = testGroup "Document from yaml"
         parseDocument "- qi:\n  - VcAC: ''\n  xl: 2\n" @?= Right (DList [DMap [("qi",DList [DMap [("VcAC",DString "")]]),("xl",DInteger 2)]])
     , testCase "test13" $
         parseDocument "QLs:\n  A:\n  - 'm  '\n  - -1\n  - l: []\n    o: -1\n    ap:\n      DWf: -3\n      'Y': []\nBM: []\ni: j0L\n" @?= Right (DMap [("BM",DList []),("QLs",DMap [("A",DList [DString "m  ",DInteger (-1),DMap [("ap",DMap [("DWf",DInteger (-3)),("Y",DList [])]),("l",DList []),("o",DInteger (-1))]])]),("i",DString "j0L")])
+    , testCase "test14" $
+        parseDocument "---\n- []\n- 'n': []\n  g:\n    LR: -3\n" @?= Right (DList [DList [],DMap [("g",DMap [("LR",DInteger (-3))]),("n",DList [])]])
+    , testCase "test15" $
+        parseDocument "---\n- BjA: 2\n  PL: '4  '\n- 3\n- ''\n"  @?= Right (DList [DMap [("BjA",DInteger 2),("PL",DString "4  ")],DInteger 3,DString ""])
+    , testCase "test16" $
+        parseDocument "---\n'N':\n- NffY: -1\n- - -1\n- 6\n" @?=  Right (DMap [("N",DList [DMap [("NffY",DInteger (-1))],DList [DInteger (-1)],DInteger 6])])
+    , testCase "test17" $
+        parseDocument "hy: []\nU:\n- UC:\n  - J\n  Li: []\n- ''\n" @?= Right (DMap [("U",DList [DMap [("Li",DList []),("UC",DList [DString "J"])],DString ""]),("hy",DList [])])  
+    
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
@@ -137,13 +149,46 @@ toYamlTests = testGroup "Document to yaml"
         renderDocument (DMap [("MV",DString " m"),("eA",DList [DString "X"])]) @?= "---\nMV: ' m'\neA:\n- X\n"
     , testCase "test" $
         renderDocument (DMap [("m",DList []),("u",DString "5I")]) @?= "---\nm: []\nu: 5I\n"
-    , testCase "test1" $
-        renderDocument (DList [DMap [("AuiG",DInteger 5),("bpqXke",DInteger 6),("rQLrCPqAiD",DList [DInteger (-10)])],DList [DMap [("VXe",DString " 0ke")]]]) @?= "---\n- AuiG: 5\n  rQLrCPqAiD:\n  - -10\n  bpqXke: 6\n- - VXe: ' 0ke'\n  - 8\n- 2\n"
     , testCase "test2" $
         renderDocument (DMap [("Z",DMap [("BI",DInteger 2),("BS",DInteger (-1))]),("f",DInteger (-2))]) @?= "---\nZ:\n  BI: 2\n  BS: -1\nf: -2\n"
     , testCase "test3" $
         renderDocument (DList [DInteger (-3),DInteger (-1),DMap [("n",DMap []),("UFR",DString "R "),("bvg",DInteger (-1))]]) @?= "---\n- -3\n- -1\n- 'n': {}\n  UFR: 'R '\n  bvg: -1\n"
-    -- IMPLEMENT more test cases:
+    , testCase "test4" $
+        renderDocument (DList [DList [],DList [DInteger 0,DList [DString "",DString "Y"]]]) @?= "---\n- []\n- - 0\n  - - ''\n    - 'Y'\n"
+    , testCase "test5" $
+        renderDocument (DMap [("v",DList [DMap [("P",DMap [("t",DString "q ")])]])]) @?= "---\nv:\n- P:\n    t: 'q '\n"
+    , testCase "test6" $
+        renderDocument (DList [DMap [("XAop",DString "8oh ")],DList [DList []],DList [DMap [("GwITlZZs",DMap [])],DInteger 0],DString "   v0K"]) @?= "---\n- XAop: '8oh '\n- - []\n- - GwITlZZs: {}\n  - 0\n- '   v0K'\n"
+    , testCase "test7" $
+        renderDocument (DList [DList [DMap [],DInteger 0,DList []],DInteger 3]) @?= "---\n- - {}\n  - 0\n  - []\n- 3\n"
+    , testCase "test8" $
+        renderDocument (DList [DMap [("WiYI",DList [DInteger 1]),("zYBs",DString "jf"),("a",DInteger 4)]]) @?= "---\n- WiYI:\n  - 1\n  zYBs: jf\n  a: 4\n"
+    , testCase "test9" $
+        renderDocument (DMap [("mPztkEPS",DMap []),("sbn",DMap [("BLAvq",DList [DInteger (-4),DMap [],DList [DString "zn0"]])])]) @?= "---\nmPztkEPS: {}\nsbn:\n  BLAvq:\n  - -4\n  - {}\n  - - zn0\n"
+    , testCase "test10" $
+        renderDocument (DList [DMap [("hGu",DMap [("a",DList [DMap [("m",DString ""),("WP",DMap [])]]),("ZlD",DString "7 ")])],DInteger 1,DMap []]) @?= "---\n- hGu:\n    a:\n    - m: ''\n      WP: {}\n    ZlD: '7 '\n- 1\n- {}\n"
+    , testCase "test11" $
+        renderDocument (DList [DInteger 4,DMap [("s",DInteger (-4)),("GY",DMap [("Mfuxd",DInteger 4),("j",DMap [("enyF",DMap [])]),("c",DString " ")])]]) @?= "---\n- 4\n- s: -4\n  GY:\n    Mfuxd: 4\n    j:\n      enyF: {}\n    c: ' '\n"
+    , testCase "test12" $
+        renderDocument (DList [DList [],DMap [("n",DList []),("g",DMap [("LR",DInteger (-3))])]]) @?= "---\n- []\n- 'n': []\n  g:\n    LR: -3\n"
+    , testCase "test13" $
+        renderDocument (DList [DMap [("BjA",DInteger 2),("PL",DString "4  ")],DInteger 3,DString ""]) @?= "---\n- BjA: 2\n  PL: '4  '\n- 3\n- ''\n"
+    , testCase "test14" $
+        renderDocument (DMap [("n",DList [DString "H"])]) @?= "---\n'n':\n- H\n"
+    , testCase "test15" $
+        renderDocument (DMap [("N",DList [DMap [("NffY",DInteger (-1))],DList [DInteger (-1)],DInteger 6])]) @?= "---\n'N':\n- NffY: -1\n- - -1\n- 6\n"
+    , testCase "test16" $
+        renderDocument (DList [DList [DMap [("hZfe",DInteger (-4)),("rjP",DInteger (-4))],DMap [("LO",DInteger 3)],DMap []],DInteger 2]) @?= "---\n- - hZfe: -4\n    rjP: -4\n  - LO: 3\n  - {}\n- 2\n"
+    , testCase "test17" $
+        renderDocument (DMap [("hy",DList []),("U",DList [DMap [("UC",DList [DString "J"]),("Li",DList [])],DString ""])]) @?= "---\nhy: []\nU:\n- UC:\n  - J\n  Li: []\n- ''\n"
+    , testCase "test18" $
+        renderDocument (DList [DMap [("rpCvz",DInteger (-8)),("pceg",DMap [("frhHRQ",DList [DInteger 4])])]]) @?= "---\n- rpCvz: -8\n  pceg:\n    frhHRQ:\n    - 4\n"
+    , testCase "test19" $
+        renderDocument (DMap [("Z",DMap [("NR",DMap [("drL",DString "")]),("Xp",DString "tG "),("FtI",DInteger (-3))]),("GaW",DList [])]) @?= "---\nZ:\n  NR:\n    drL: ''\n  Xp: 'tG '\n  FtI: -3\nGaW: []\n"
+    , testCase "test20" $
+        renderDocument (DMap [("Y",DList [DMap [("GPQK",DMap [("P",DString " 9nj5")]),("zt",DString "Ve")]]),("Nn",DString "m")]) @?= "---\n'Y':\n- GPQK:\n    P: ' 9nj5'\n  zt: Ve\nNn: m\n"
+    , testCase "test21" $
+        renderDocument (DList [DString "V ",DList [DMap [("w",DList []),("rUe",DMap [("uIHOr",DString "   ")]),("xjos",DString "")],DMap [("QmAI",DString "Me"),("ojf",DInteger 5),("r",DString " 63z"),("BbeD",DInteger (-1))],DString " "]]) @?= "---\n- 'V '\n- - w: []\n    rUe:\n      uIHOr: '   '\n    xjos: ''\n  - QmAI: Me\n    ojf: 5\n    r: ' 63z'\n    BbeD: -1\n  - ' '\n"
     -- * other primitive types/values
     -- * nested types
 
@@ -202,9 +247,10 @@ dlistInDmap = unlines[
       "---",
       "first:",
       "- second:",
-      "    - 1",
-      "    - 2"
+      "  - 1",
+      "  - 2"
   ]
+
 dlistsInList :: String
 dlistsInList = unlines[
       "---",

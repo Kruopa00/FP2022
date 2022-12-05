@@ -76,9 +76,9 @@ ultimateParser3000 (DMap d) s sk = do
                 else do
                     (_, spaceCount) <- parseSpace 0 ss1
                     if (spaceCount < sk) then do
-                        return (DMap (d ++ [(a, d1)]), b2)
+                        return (DMap (d ++ [(remove' a, d1)]), b2)
                     else
-                        ultimateParser3000 (DMap (d ++ [(a, d1)])) b2 sk                
+                        ultimateParser3000 (DMap (d ++ [(remove' a, d1)])) b2 sk                
             else do     -- DMap
                 (d3, s3) <- ultimateParser3000 (DMap []) l (sk + 2)
                 (_, spaceCount) <- parseSpace 0 s3
@@ -151,6 +151,10 @@ remove' (x:xs) = do
     if x == '\'' then (take ((Prelude.length xs) - 1) xs)
     else do
         (x:xs)
+
+
+
+
 
 convertSingleToDoc :: String -> Document
 convertSingleToDoc s

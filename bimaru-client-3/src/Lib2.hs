@@ -21,9 +21,30 @@ coordGet :: Coord -> Document
 coordGet (Coord x y) = DMap[("col",DInteger x),("row",DInteger y)]
 
 
+removenl :: String -> Char -> String -> String
+removenl (x:xs) c g = do
+    if ( x == '\n' && c == '\n') then do
+        removenl xs x g
+    else 
+        removenl xs x (g++[x])
+removenl (x:[]) c g = do
+    if ( x == '\n' && c == '\n') then
+        (g ++ "1")
+    else 
+        ((g ++ [x])++"2")
+removenl _ _ g = g 
+
+
+
+removeSpace :: String -> String
+removeSpace str = do 
+    if drop ((length str) - 2) str == "  " then
+        removeSpace (take ((length str) - 2) str)
+    else 
+        str 
 
 renderDocument :: Document -> String
-renderDocument x = "---\n" ++ renderDocumentRecursive x 0 ""
+renderDocument x =  (removenl ("---\n" ++  (renderDocumentRecursive x 0 "")) 'c' "")
 
 renderDocumentRecursive :: Document -> Int -> String -> String
 
@@ -58,23 +79,26 @@ fixString x = do
         if (take 1 x == " " || last x == ' ') then
             "'" ++ x ++ "'"
         else 
-            x
+            add' x
 
 
 
 renderList :: Document -> Int -> String -> String
 --renderList (DList ((DMap []):[])) c string =string ++ "- {}\n"
-renderList (DList ((DMap []):xs)) c string = renderList (DList xs) c (string ++ "- {}\n")
+renderList (DList ((DMap []):xs)) c string = renderList (DList xs) c (string ++ (duplicate "  " c) ++ "- {}\n")
 renderList (DList ((DMap x):xs)) c string = renderList (DList xs) c (renderMap (DMap x) (c+1) (string ++ (duplicate "  " c) ++ "- "))
-renderList (DList ((DList []):xs)) c string = renderList (DList xs) c (string ++ "- []\n")
-renderList (DList ((DList x):xs)) c string = renderList (DList xs) c (renderList' (DList x) (c+1) (string ++ "- "))
+renderList (DList ((DList []):xs)) c string = renderList (DList xs) c (string ++ (duplicate "  " c) ++"- []\n")
+renderList (DList ((DList x):xs)) c string = renderList (DList xs) c (renderList' (DList x) (c+1) (string ++ (duplicate "  " c) ++ "- "))
 renderList (DList (x:[])) c string = renderList x (c) (string ++ (duplicate "  " c) ++ "- ") ++ "\n" -- pridejom \n 
 renderList (DList (x:xs)) c string = renderList (DList xs) c (renderList x c (string ++ (duplicate "  " c) ++ "- ")++ "\n" )
 renderList (DMap ((x,DMap []):[])) c string = string ++  (add' x) ++ ":" ++ " {}"
-renderList (DMap ((x,DMap xs):[])) c string =  renderMap (DMap xs) (c+1) (string ++  (add' x) ++ ":")
-renderList (DMap ((x,DList xs):[])) c string =  renderMap (DList xs) (c+1) (string ++  (add' x) ++ ":")
+renderList (DMap ((x,DMap []):xss)) c string = renderList (DMap xss) c (string ++  (add' x) ++ ": {}" ++ "\n" ++ (duplicate "  " c))
+renderList (DMap ((x,DMap xs):[])) c string =  renderMap (DMap xs) (c+1) (string ++  (add' x) ++ ":" ++ "\n" ++ (duplicate "  " (c+1)))
+renderList (DMap ((x,DList []):[])) c string = (string ++  (add' x) ++ ": []\n")
+renderList (DMap ((x,DList xs):[])) c string =  renderMap (DList xs) (c) (string ++  (add' x) ++ ":")
 renderList (DMap ((x,xs):[])) c string =  renderMap xs (c+1) (string ++  (add' x) ++ ": ") -- pridejom c+1, \n
 renderList (DMap ((x,DMap xs):xss)) c string = renderList (DMap xss) c (renderMap (DMap xs) c (string ++  (add' x) ++ ":") ++ "\n" ++ (duplicate "  " c))
+renderList (DMap ((x,DList []):xss)) c string = renderList (DMap xss) c (string ++  (add' x) ++ ": " ++ "[]" ++ "\n" ++ (duplicate "  " c))
 renderList (DMap ((x,DList xs):xss)) c string = renderList (DMap xss) c (renderMap (DList xs) c (string ++  (add' x) ++ ":") ++ "\n" ++ (duplicate "  " c))
 renderList (DMap ((x,xs):xss)) c string = renderList (DMap xss) c (renderMap xs c (string ++  (add' x) ++ ": ") ++ "\n" ++ (duplicate "  " c))
 renderList (DInteger x) _ string = string ++ show x
@@ -84,24 +108,33 @@ renderList _ _ string = string
 
 
 renderList' :: Document -> Int -> String -> String
+renderList' (DList ((DList []):xs)) c string = renderList (DList xs) c  (string ++ "- []\n")
+renderList' (DList ((DMap []):xs)) c string = renderList (DList xs) c  (string ++ "- {}\n")
 renderList' (DList ((DList x):xs)) c string = renderList (DList xs) c (renderList' (DList x) (c+1) (string ++ "- "))
+renderList' (DList ((DMap ((x,(DList xss)):xsss)):xs)) c string = renderList (DList xs) c (renderMap (DMap ((x,(DList xss)):xsss)) (c+1) (string ++ "- ")++ "\n" )
+renderList' (DList ((DMap ((x,xss):xsss)):xs)) c string = renderList (DList xs) c (renderMap (DMap ((x,xss):xsss)) (c+1) (string ++ "- ")++ "\n" )
 renderList' (DList (x:xs)) c string = renderList (DList xs) c (renderList x c (string ++ "- ")++ "\n" )
 renderList' _ _ string = string
 
 
 
 renderMap :: Document -> Int -> String -> String
+renderMap (DList ((DMap []):xs)) c string = renderMap (DList xs) c (string ++ "\n" ++ (duplicate "  " c) ++ "- " ++ "{}\n") -- ?
+renderMap (DList ((DList []):xs)) c string = renderMap (DList xs) c (string ++ "\n" ++ (duplicate "  " c) ++ "- " ++ "[]\n") -- ?
 renderMap (DList ((DList x):xs)) c string = renderMap (DList xs) c (renderList' (DList x) (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
+renderMap (DList ((DMap x):xs)) c string = renderMap (DList xs) c (renderMap (DMap x) (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
 renderMap (DList (x:xs)) c string = renderMap (DList xs) c (renderList x (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
 renderMap (DMap ((x,DList []):[])) c string =  (((string ++ (add' x) ++ ": []"))++"\n")
 renderMap (DMap ((x,DList []):xss)) c string =  renderMap (DMap xss) c ((string ++ (add' x) ++ ": []")++"\n" ++ (duplicate "  " c))
-renderMap (DMap ((x,DList xs):[])) c string =  (renderMap (DList xs) c (string ++ (add' x) ++ ":"))++"\n"
-renderMap (DMap ((x,DList xs):xss)) c string =  renderMap (DMap xss) c ((renderMap (DList xs) c (string ++ (add' x) ++ ":"))++"\n")
+renderMap (DMap ((x,DList xs):[])) c string =  (renderMap (DList xs) c (string ++ (add' x) ++ ":"))++"\n" -- questionable
+renderMap (DMap ((x,DList xs):xss)) c string =  renderMap (DMap xss) c ((renderMap (DList xs) c (string ++ (add' x) ++ ":"))++"\n" ++ (duplicate "  " c)) -- ??
 renderMap (DMap ((x,DMap []):[])) c string = (string ++  (add' x) ++ ": {}" ++ "\n")
 renderMap (DMap ((x,DMap []):xss)) c string = renderMap (DMap xss) c (string ++ (add' x) ++ ": {}" ++ "\n" ++ (duplicate "  " c))
-renderMap (DMap ((x,DMap xs):xss)) c string = renderMap (DMap xss) c (renderMap (DMap xs) (c+1) (string ++  (add' x) ++ ":" ++ "\n" ++ (duplicate "  " (c+1))))
+--renderMap (DMap ((x,DMap (xs:[])):xss)) c string = renderMap (DMap xss) c ((renderMap (DMap [xs]) (c+1) (string ++  (add' x) ++ ":" ++ "\n"))++ (duplicate "  " (c))) -- -- -- bad
+renderMap (DMap ((x,DMap xs):[])) c string = (renderMap (DMap xs) (c+1) (string ++  (add' x) ++ ":" ++ "\n" ++ (duplicate "  " (c+1))))-- -- --
+renderMap (DMap ((x,DMap xs):xss)) c string = renderMap (DMap xss) c ((renderMap (DMap xs) (c+1) (string ++  (add' x) ++ ":" ++ "\n" ++ (duplicate "  " (c+1)))) ++ (duplicate "  " c)) -- -- --
 renderMap (DMap ((x,xs):[])) c string = ((renderMap xs c (string ++ (add' x) ++ ": ")) ++ "\n") -- jei paskutinis dmapo tuplas dedam tarpa
-renderMap (DMap ((x,xs):xss)) c string = renderMap (DMap xss) c ((renderMap xs c (string ++ (add' x) ++ ": "))++"\n" ++ (duplicate "  " c))
+renderMap (DMap ((x,xs):xss)) c string = renderMap (DMap xss) c (((renderMap xs c (string ++ (add' x) ++ ": "))++"\n" ++ (duplicate "  " c)))
 renderMap (DInteger x) _ string = string ++ show x
 renderMap (DString "") _ string = string ++ "''"
 renderMap (DString x) _ string = string ++ fixString x
@@ -112,7 +145,7 @@ renderMap _ _ string = string
 
 add' :: String -> String 
 add' x = do
-    if (x == "n" || x == "N") then
+    if (x == "n" || x == "N" || x == "y" || x == "Y" ) then
         "'" ++ x ++ "'"
     else x
     
