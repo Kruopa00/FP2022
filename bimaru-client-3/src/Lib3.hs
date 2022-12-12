@@ -41,7 +41,6 @@ parseDocument stri = do
                 return doc
             else        -- single
                 return (convertSingleToDoc a)
-parseDocument _ = Left "Not S"
 
 ultimateParser3000 :: Document -> String -> Integer-> Either String (Document, String)
 ultimateParser3000 d "" _ = do
@@ -130,7 +129,7 @@ ultimateParser3000 (DList d) str sk = do
                 else do
                     return (DList ((d ++ [dmap])), string)
 
-ultimateParser3000 _ _ _ = Left "Blogai ultimateParser3000"
+ultimateParser3000 _ _ _ = Left "Failure ultimateParser3000"
 
 removeFour :: String -> Integer -> String
 removeFour (x:xs) n = do
@@ -144,7 +143,6 @@ removeDashes :: String -> Either String String
 removeDashes x
     | take 4 x == "---\n" = Right $ removeFour x 0
     | otherwise = Right x
-removeDashes _ = Left "Blogai"
 
 remove' :: String -> String
 remove' (x:xs) = do
@@ -193,7 +191,7 @@ parseStringUntil :: Char -> String -> String -> Either String (String, String)
 parseStringUntil _ s "" = Right (s, "")
 parseStringUntil ch s (x:xs) | ch == x = Right (s, xs)
                     | otherwise = parseStringUntil ch (s ++ [x]) xs
-parseStringUntil _ _ _ = Left "Empty"
+
 
 parseUntilPlural :: String -> Either String (String, Bool)                -- jei Dlistas true, jei dmapas false
 parseUntilPlural (x:xs)
@@ -209,7 +207,7 @@ parseUntilPlural (x:xs)
     | x=='{' = Right (x:xs, False)
     | otherwise = parseUntilPlural xs
 parseUntilPlural "" = Right ("", False)
-parseUntilPlural _ = Left "blogai"
+
 
 checkChar :: Char -> String -> Either String (String, Bool)
 checkChar ch (x:xs) | ch == x = Right (xs, True)
@@ -225,7 +223,7 @@ parseSpace :: Integer -> String -> Either String (String, Integer)
 parseSpace num "" = Right ("", num)
 parseSpace num (x:xs)   | ' ' == x = parseSpace (num + 1) xs
                         | otherwise = Right ((x:xs), num)
-parseSpace x _ = Right ("", x)
+
 
 -- IMPLEMENT
 -- Change right hand side as you wish
@@ -255,13 +253,13 @@ instance FromDocument Hint where
     fromDocument :: Document -> Either String Hint
     --fromDocument x = Left $ (show x) ++ "1"
     fromDocument (DMap x) = Right (Hint x)
-    fromDocument _ = Left "No"
+    fromDocument _ = Left "Failure in fromDocument function getting Hint"
 
 instance FromDocument GameStart where
     fromDocument :: Document -> Either String GameStart
     --fromDocument x = Left (show x)
     fromDocument (DMap x) = Right (GameStart x)
-    fromDocument _ = Left "No"
+    fromDocument _ = Left "Failure in fromDocument function getting GameStart"
 
 -- Adds hint data to the game state
 -- Errors are not reported since GameStart is already totally valid adt

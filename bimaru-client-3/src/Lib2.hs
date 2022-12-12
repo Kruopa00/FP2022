@@ -27,11 +27,11 @@ removenl (x:xs) c g = do
         removenl xs x g
     else 
         removenl xs x (g++[x])
-removenl (x:[]) c g = do
-    if ( x == '\n' && c == '\n') then
-        (g ++ "1")
-    else 
-        ((g ++ [x])++"2")
+--removenl (x:[]) c g = do
+    --if ( x == '\n' && c == '\n') then
+        --(g ++ "1")
+    --else 
+        --((g ++ [x])++"2")
 removenl _ _ g = g 
 
 
@@ -91,10 +91,10 @@ renderList (DList ((DList []):xs)) c string = renderList (DList xs) c (string ++
 renderList (DList ((DList x):xs)) c string = renderList (DList xs) c (renderList' (DList x) (c+1) (string ++ (duplicate "  " c) ++ "- "))
 renderList (DList (x:[])) c string = renderList x (c) (string ++ (duplicate "  " c) ++ "- ") ++ "\n" -- pridejom \n 
 renderList (DList (x:xs)) c string = renderList (DList xs) c (renderList x c (string ++ (duplicate "  " c) ++ "- ")++ "\n" )
-renderList (DMap ((x,DMap []):[])) c string = string ++  (add' x) ++ ":" ++ " {}"
+renderList (DMap ((x,DMap []):[])) _ string = string ++  (add' x) ++ ":" ++ " {}"
 renderList (DMap ((x,DMap []):xss)) c string = renderList (DMap xss) c (string ++  (add' x) ++ ": {}" ++ "\n" ++ (duplicate "  " c))
 renderList (DMap ((x,DMap xs):[])) c string =  renderMap (DMap xs) (c+1) (string ++  (add' x) ++ ":" ++ "\n" ++ (duplicate "  " (c+1)))
-renderList (DMap ((x,DList []):[])) c string = (string ++  (add' x) ++ ": []\n")
+renderList (DMap ((x,DList []):[])) _ string = (string ++  (add' x) ++ ": []\n")
 renderList (DMap ((x,DList xs):[])) c string =  renderMap (DList xs) (c) (string ++  (add' x) ++ ":")
 renderList (DMap ((x,xs):[])) c string =  renderMap xs (c+1) (string ++  (add' x) ++ ": ") -- pridejom c+1, \n
 renderList (DMap ((x,DMap xs):xss)) c string = renderList (DMap xss) c (renderMap (DMap xs) c (string ++  (add' x) ++ ":") ++ "\n" ++ (duplicate "  " c))
@@ -124,11 +124,11 @@ renderMap (DList ((DList []):xs)) c string = renderMap (DList xs) c (string ++ "
 renderMap (DList ((DList x):xs)) c string = renderMap (DList xs) c (renderList' (DList x) (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
 renderMap (DList ((DMap x):xs)) c string = renderMap (DList xs) c (renderMap (DMap x) (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
 renderMap (DList (x:xs)) c string = renderMap (DList xs) c (renderList x (c+1) (string ++ "\n" ++ (duplicate "  " c) ++ "- "))
-renderMap (DMap ((x,DList []):[])) c string =  (((string ++ (add' x) ++ ": []"))++"\n")
+renderMap (DMap ((x,DList []):[])) _ string =  (((string ++ (add' x) ++ ": []"))++"\n")
 renderMap (DMap ((x,DList []):xss)) c string =  renderMap (DMap xss) c ((string ++ (add' x) ++ ": []")++"\n" ++ (duplicate "  " c))
 renderMap (DMap ((x,DList xs):[])) c string =  (renderMap (DList xs) c (string ++ (add' x) ++ ":"))++"\n" -- questionable
 renderMap (DMap ((x,DList xs):xss)) c string =  renderMap (DMap xss) c ((renderMap (DList xs) c (string ++ (add' x) ++ ":"))++"\n" ++ (duplicate "  " c)) -- ??
-renderMap (DMap ((x,DMap []):[])) c string = (string ++  (add' x) ++ ": {}" ++ "\n")
+renderMap (DMap ((x,DMap []):[])) _ string = (string ++  (add' x) ++ ": {}" ++ "\n")
 renderMap (DMap ((x,DMap []):xss)) c string = renderMap (DMap xss) c (string ++ (add' x) ++ ": {}" ++ "\n" ++ (duplicate "  " c))
 --renderMap (DMap ((x,DMap (xs:[])):xss)) c string = renderMap (DMap xss) c ((renderMap (DMap [xs]) (c+1) (string ++  (add' x) ++ ":" ++ "\n"))++ (duplicate "  " (c))) -- -- -- bad
 renderMap (DMap ((x,DMap xs):[])) c string = (renderMap (DMap xs) (c+1) (string ++  (add' x) ++ ":" ++ "\n" ++ (duplicate "  " (c+1))))-- -- --

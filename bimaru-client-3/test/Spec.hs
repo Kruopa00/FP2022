@@ -4,7 +4,7 @@ import Test.Tasty.QuickCheck
 import Data.String.Conversions
 import Data.Yaml as Y ( encodeWith, defaultEncodeOptions, defaultFormatOptions, setWidth, setFormat)
 
-import Lib2 (renderDocument, gameStart, hint)
+import Lib2 (renderDocument)
 import Lib3 (parseDocument)
 import Types (Document(..))
 
